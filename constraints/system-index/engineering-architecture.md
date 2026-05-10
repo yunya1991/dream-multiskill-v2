@@ -150,3 +150,4 @@ memory 经验沉淀
 - 版本：v1.0
 - 状态：基线生效
 - 维护目录：`constraints/system-index/`
+- 对应通信契约：`constraints/workflows-spec/communication-contract-v0.1.md`
