@@ -42,6 +42,11 @@ def test_arch_guard_fails_for_unknown_top_level_directory():
     assert "Unknown top-level directory" in result.stderr
 
 
+def test_arch_guard_allows_workbuddy_top_level_directory():
+    result = _run_guard([".workbuddy/memory_l4/schemas/stats.schema.json"])
+    assert result.returncode == 0, result.stderr
+
+
 def test_arch_guard_fails_if_docs_architecture_not_synced():
     result = _run_guard(["docs/architecture.md"])
     assert result.returncode == 1
