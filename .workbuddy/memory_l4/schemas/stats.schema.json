@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MemoryL4Stats",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["snapshot_ts", "points"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "default": "v0.1"
+    },
+    "snapshot_ts": {
+      "type": "string",
+      "description": "ISO8601 with timezone",
+      "minLength": 1
+    },
+    "points": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/point" },
+      "default": []
+    },
+    "performance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "win_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "profit_factor": { "type": ["number", "null"] },
+        "avg_rr": { "type": ["number", "null"] },
+        "max_drawdown": { "type": ["number", "null"] }
+      }
+    },
+    "aggregations": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "按 inst_id / regime / tag 等维度的聚合结果"
+    },
+    "migration_trends": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/migration_trend" },
+      "default": []
+    }
+  },
+  "$defs": {
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "x", "y"],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "type": "string", "enum": ["case", "distill"] },
+        "x": { "type": "number", "minimum": -1, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 },
+        "inst_id": { "type": ["string", "null"] },
+        "regime": { "type": ["string", "null"] },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    },
+    "migration_trend": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "kind", "series"],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "type": "string", "enum": ["case", "distill"] },
+        "series": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ts_value" },
+          "default": []
+        }
+      }
+    },
+    "ts_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ts", "y"],
+      "properties": {
+        "ts": { "type": "string" },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}
