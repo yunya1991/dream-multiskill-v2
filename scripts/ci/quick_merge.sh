@@ -16,6 +16,9 @@ REPO="${1:-yunya1991/dream-multiskill-v2}"
 TITLE="${2:-$(git log -1 --pretty=%s)}"
 BODY="${3:-Auto PR created by quick_merge.sh}"
 
+echo "Remote-first guard check..."
+python3 scripts/ci/remote_repo_guard.py "$REPO"
+
 echo "Sync remotes..."
 git fetch origin --prune
 
