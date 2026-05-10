@@ -146,3 +146,4 @@ evolution --审核发布--> constraints
 ## 12. 同步记录
 
 - `2026-05-10T16:02:59Z`：同步迁移 `dream-trading-automation` 最新记忆 L4 到 `dream-multiskill-v2`，覆盖 `scripts/memory_l4/`、`workflows/memory/memory_engine/`、`.workbuddy/memory_l4/schemas/` 及对应测试集合。
+- `2026-05-10T16:10:27Z`：完成 `workflows/memory/L1~L4_archive` 显式入口对齐，新增每层 `entrypoint.py` 薄封装并统一调用 `MemoryEngine`。
