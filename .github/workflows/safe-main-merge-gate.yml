@@ -42,3 +42,9 @@ jobs:
           CHANGED_FILES_PATH: changed_files.txt
         run: |
           python scripts/ci/safe_main_merge_gate.py
+
+      - name: Run architecture sync guard
+        env:
+          CHANGED_FILES_PATH: changed_files.txt
+        run: |
+          python scripts/ci/architecture_sync_guard.py
