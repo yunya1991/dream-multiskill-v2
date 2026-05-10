@@ -48,3 +48,10 @@ jobs:
           CHANGED_FILES_PATH: changed_files.txt
         run: |
           python scripts/ci/architecture_sync_guard.py
+
+      - name: Run review policy guard
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER_LOGIN: yunya1991
+        run: |
+          python scripts/ci/review_policy_guard.py
