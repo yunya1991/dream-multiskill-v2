@@ -149,3 +149,4 @@ evolution --审核发布--> constraints
 - `2026-05-10T16:10:27Z`：完成 `workflows/memory/L1~L4_archive` 显式入口对齐，新增每层 `entrypoint.py` 薄封装并统一调用 `MemoryEngine`。
 - `2026-05-10T17:16:39Z`：完成交易链路第一批迁移（A0-A2），新增 `workflows/trading-decision/A0~A2` 入口封装，并同步迁移对应 `1-TRADE` 技能目录。
 - `2026-05-10T17:23:08Z`：完成交易链路第二批迁移（A3-A5），新增 `workflows/trading-decision/A3~A5` 入口封装，并同步迁移对应 `1-TRADE` 技能目录。
+- `2026-05-10T17:31:16Z`：完成交易链路第三批迁移（A6-A9），新增 `workflows/trading-decision/A6~A9` 入口封装，并同步迁移对应 `1-TRADE` 技能目录。
