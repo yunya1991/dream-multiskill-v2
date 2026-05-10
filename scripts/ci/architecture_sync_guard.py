@@ -7,6 +7,7 @@ from typing import Iterable, List, Set, Tuple
 
 ALLOWED_TOP_LEVEL_DIRS = {
     ".github",
+    ".workbuddy",
     "artifacts",
     "constraints",
     "docs",

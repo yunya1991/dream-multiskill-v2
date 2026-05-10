@@ -142,3 +142,7 @@ evolution --审核发布--> constraints
 1. 先对齐字段契约与错误语义。
 2. 再对齐 A0-A9 与 memory 的同步/异步边界。
 3. 最后固化 `memory -> evolution -> constraints` 发布门禁。
+
+## 12. 同步记录
+
+- `2026-05-10T16:02:59Z`：同步迁移 `dream-trading-automation` 最新记忆 L4 到 `dream-multiskill-v2`，覆盖 `scripts/memory_l4/`、`workflows/memory/memory_engine/`、`.workbuddy/memory_l4/schemas/` 及对应测试集合。

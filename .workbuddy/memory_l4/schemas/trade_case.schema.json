@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TradeCase",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "ts_start",
+    "inst_id",
+    "intent",
+    "investigation",
+    "theory_refs",
+    "environment_snapshot",
+    "plan",
+    "execution",
+    "review",
+    "quadrant"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "default": "v0.1"
+    },
+    "ts_start": {
+      "type": "string",
+      "description": "ISO8601 with timezone",
+      "minLength": 1
+    },
+    "ts_end": {
+      "type": ["string", "null"],
+      "description": "ISO8601 with timezone"
+    },
+    "inst_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["question", "goal"],
+      "properties": {
+        "question": { "type": "string" },
+        "goal": { "type": "string" },
+        "constraints": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    },
+    "investigation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "sources"],
+      "properties": {
+        "summary": { "type": "string" },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_ref" },
+          "default": []
+        }
+      }
+    },
+    "theory_refs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/source_ref" },
+      "default": []
+    },
+    "environment_snapshot": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["regime"],
+      "properties": {
+        "regime": { "type": "string" }
+      }
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimal_change", "max_future_space", "steps"],
+      "properties": {
+        "minimal_change": { "type": "string" },
+        "max_future_space": { "type": "string" },
+        "steps": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["episode_refs", "result"],
+      "properties": {
+        "episode_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/episode_ref" },
+          "default": []
+        },
+        "result": { "type": "string" }
+      }
+    },
+    "online_pressure_test": {
+      "type": ["object", "null"],
+      "additionalProperties": true
+    },
+    "rollout_monitoring": {
+      "type": ["object", "null"],
+      "additionalProperties": true
+    },
+    "backtest": {
+      "type": ["object", "null"],
+      "additionalProperties": true
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "theory_practice_consistency", "lessons"],
+      "properties": {
+        "summary": { "type": "string" },
+        "theory_practice_consistency": {
+          "type": "string",
+          "enum": ["consistent", "partially_consistent", "inconsistent"]
+        },
+        "lessons": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    },
+    "dream_reflection": {
+      "type": ["string", "null"]
+    },
+    "quadrant": { "$ref": "#/$defs/quadrant" }
+  },
+  "$defs": {
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "ref"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["repo_file", "url", "note"]
+        },
+        "ref": { "type": "string" }
+      }
+    },
+    "episode_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trace_id", "path"],
+      "properties": {
+        "trace_id": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    },
+    "quadrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "evidence"],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["weights", "y_perf", "y_consistency", "y_human"],
+          "properties": {
+            "weights": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["perf", "consistency", "human"],
+              "properties": {
+                "perf": { "type": "number", "const": 0.4 },
+                "consistency": { "type": "number", "const": 0.4 },
+                "human": { "type": "number", "const": 0.2 }
+              }
+            },
+            "y_perf": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y_consistency": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y_human": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "notes": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        }
+      }
+    }
+  }
+}

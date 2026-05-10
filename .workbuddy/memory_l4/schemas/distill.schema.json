@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Distill",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "distill_id",
+    "kind",
+    "claim",
+    "supporting_case_ids",
+    "quadrant",
+    "migration_history"
+  ],
+  "properties": {
+    "distill_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "default": "v0.1"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["benefit_experience", "risk_signal", "decision_heuristic"]
+    },
+    "claim": {
+      "type": "string",
+      "minLength": 1
+    },
+    "supporting_case_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "actionable_rules": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "quadrant": { "$ref": "#/$defs/quadrant" },
+    "migration_history": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/migration_record" },
+      "default": []
+    }
+  },
+  "$defs": {
+    "quadrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "evidence"],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["weights", "y_perf", "y_consistency", "y_human"],
+          "properties": {
+            "weights": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["perf", "consistency", "human"],
+              "properties": {
+                "perf": { "type": "number", "const": 0.4 },
+                "consistency": { "type": "number", "const": 0.4 },
+                "human": { "type": "number", "const": 0.2 }
+              }
+            },
+            "y_perf": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y_consistency": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y_human": { "type": "number", "minimum": 0, "maximum": 1 },
+            "notes": { "type": "string", "default": "" }
+          }
+        }
+      }
+    },
+    "migration_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ts", "y_prev", "y_new", "reason"],
+      "properties": {
+        "ts": { "type": "string", "minLength": 1 },
+        "y_prev": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y_new": { "type": "number", "minimum": 0, "maximum": 1 },
+        "reason": {
+          "type": "string",
+          "enum": ["new_case", "backtest_update", "review_update", "human_review_update"]
+        },
+        "note": { "type": "string", "default": "" }
+      }
+    }
+  }
+}
