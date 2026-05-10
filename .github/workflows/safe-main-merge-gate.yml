@@ -1,0 +1,44 @@
+name: Safe Main Merge Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  gate:
+    name: PR Gate Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Collect changed files
+        run: |
+          git fetch origin main --depth=1
+          git diff --name-only origin/main...HEAD > changed_files.txt
+          echo "Changed files:"
+          cat changed_files.txt
+
+      - name: Run safe main merge gate
+        env:
+          CHANGED_FILES_PATH: changed_files.txt
+        run: |
+          python scripts/ci/safe_main_merge_gate.py

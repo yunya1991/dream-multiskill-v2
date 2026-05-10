@@ -1,0 +1,36 @@
+name: Post Merge Audit
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Main Branch Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generate merge audit
+        run: |
+          python scripts/ci/post_merge_audit.py
+
+      - name: Upload audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: merge-audit-${{ github.sha }}
+          path: artifacts/merge_audit/*.json
+          if-no-files-found: error
