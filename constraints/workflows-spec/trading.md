@@ -17,6 +17,23 @@
 - `skills/1-TRADE/dream-strategy-research/SKILL.md`
 - `skills/1-TRADE/dream-first-principles/SKILL.md`
 
+## A3-A5 显式入口映射（第二批迁移）
+
+- `workflows/trading-decision/A3_simulation/entrypoint.py`
+  - `run_a3_simulation`：评分与波动驱动策略模式选择
+- `workflows/trading-decision/A4_validation/entrypoint.py`
+  - `run_a4_validation`：风控门禁判定（PASS/REVIEW/BLOCK）
+- `workflows/trading-decision/A5_execution/entrypoint.py`
+  - `run_a5_execution`：生成最小下单计划
+
+## 第二批技能迁移清单（A3-A5）
+
+- `skills/1-TRADE/dream-strategy-designer/SKILL.md`
+- `skills/1-TRADE/dream-strategy-parser/SKILL.md`
+- `skills/1-TRADE/dream-tactical-validator/SKILL.md`
+- `skills/1-TRADE/dream-pretrade-gatekeeper/SKILL.md`
+- `skills/1-TRADE/dream-tactical-executor/SKILL.md`
+
 ## 约束
 
 - 入口层保持薄封装，不承载复杂业务逻辑。
