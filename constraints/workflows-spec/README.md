@@ -11,3 +11,5 @@
 - `a0-a9-fullchain-checklist.md`：A0-A9 全链路迁移对照清单（源仓 vs 本地仓）
 - `skill-inventory-checklist.md`：SKILL 全量迁移清单（分层明细 + 缺口）
 - `skill-inventory-checklist.md`（2026-05-11 更新）：基线技能覆盖率审计（47/47）与重要级分层状态
+- `a0-a9-tooling-audit-2026-05-11.md`：A0-A9 完整闭环相关工具核查（入口/技能/记忆/门禁）
+- `a0-a9-system-level-implementation-checklist.md`：A0-A9 协议与三大闭环系统级实现清单（P0/P1/P2）
