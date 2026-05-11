@@ -27,6 +27,11 @@ Decision Gate 执行输入由三部分组成：
 }
 ```
 
+P1 版本扩展说明：
+
+- 默认 `required_stages` 升级为 `["audit","sandbox","stress","scenario","backtest"]`
+- 引入 `stage_policy`，详见 `constraints/workflows-spec/evolution-p1-stage-policy-spec-v0.1.md`
+
 ## 3. 判定规则（可执行）
 
 按顺序执行，任一步失败立即 `reject`：

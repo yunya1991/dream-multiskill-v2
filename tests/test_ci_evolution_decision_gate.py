@@ -47,6 +47,8 @@ def test_decision_gate_approve_writes_decision_promotion_and_pointer(tmp_path):
             str(candidate_path),
             "--reports",
             f"{audit_path},{sandbox_path}",
+            "--required-stages",
+            "audit,sandbox",
             "--to-version",
             "v0.1.1",
             "--artifacts-dir",
@@ -94,6 +96,8 @@ def test_decision_gate_rejects_when_required_stage_missing(tmp_path):
             str(candidate_path),
             "--reports",
             str(audit_path),
+            "--required-stages",
+            "audit,sandbox",
             "--to-version",
             "v0.1.1",
             "--artifacts-dir",
@@ -144,6 +148,8 @@ def test_decision_gate_rejects_when_report_has_violation(tmp_path):
             str(candidate_path),
             "--reports",
             f"{audit_path},{sandbox_path}",
+            "--required-stages",
+            "audit,sandbox",
             "--to-version",
             "v0.1.1",
             "--artifacts-dir",
@@ -155,3 +161,179 @@ def test_decision_gate_rejects_when_report_has_violation(tmp_path):
         ]
     )
     assert rc == 1
+
+
+def test_decision_gate_stage_policy_allows_warnings_for_selected_stage(tmp_path):
+    mod = _load_module("scripts/ci/evolution_decision_gate.py")
+    candidate = {
+        "candidate_id": "cand-004",
+        "trace_id": "trace-004",
+        "constraint_version_base": "v0.1",
+        "evidence_refs": ["artifacts/evolution/feedback/evidence_pack_004.json"],
+        "schema_version": "evolution-p0-candidate-v0.1",
+    }
+    audit = {"candidate_id": "cand-004", "stage": "audit", "pass": True, "violations": []}
+    sandbox = {"candidate_id": "cand-004", "stage": "sandbox", "pass": True, "violations": []}
+    stress = {"candidate_id": "cand-004", "stage": "stress", "pass": True, "violations": []}
+    scenario = {
+        "candidate_id": "cand-004",
+        "stage": "scenario",
+        "pass": True,
+        "violations": [{"code": "SCENARIO_WARN", "severity": "medium"}],
+    }
+    backtest = {"candidate_id": "cand-004", "stage": "backtest", "pass": True, "violations": []}
+    stage_policy = {
+        "scenario": {
+            "require_pass": True,
+            "allow_warnings": True,
+            "max_violation_count": 1,
+            "severity_blocklist": ["high", "critical"],
+        }
+    }
+
+    candidate_path = tmp_path / "candidate.json"
+    report_paths = []
+    for name, payload in [
+        ("audit", audit),
+        ("sandbox", sandbox),
+        ("stress", stress),
+        ("scenario", scenario),
+        ("backtest", backtest),
+    ]:
+        path = tmp_path / f"{name}.json"
+        _write_json(path, payload)
+        report_paths.append(path)
+    policy_path = tmp_path / "stage_policy.json"
+    _write_json(candidate_path, candidate)
+    _write_json(policy_path, stage_policy)
+
+    rc = mod.main(
+        [
+            "--candidate",
+            str(candidate_path),
+            "--reports",
+            ",".join(str(path) for path in report_paths),
+            "--required-stages",
+            "audit,sandbox,stress,scenario,backtest",
+            "--stage-policy-json",
+            str(policy_path),
+            "--to-version",
+            "v0.1.2",
+            "--artifacts-dir",
+            str(tmp_path / "decision"),
+            "--rollback-dir",
+            str(tmp_path / "rollback"),
+            "--timestamp",
+            "2026-05-12T10:00:00Z",
+        ]
+    )
+    assert rc == 0
+
+
+def test_decision_gate_stage_policy_blocks_high_severity(tmp_path):
+    mod = _load_module("scripts/ci/evolution_decision_gate.py")
+    candidate = {
+        "candidate_id": "cand-005",
+        "trace_id": "trace-005",
+        "constraint_version_base": "v0.1",
+        "evidence_refs": ["artifacts/evolution/feedback/evidence_pack_005.json"],
+        "schema_version": "evolution-p0-candidate-v0.1",
+    }
+    audit = {"candidate_id": "cand-005", "stage": "audit", "pass": True, "violations": []}
+    sandbox = {"candidate_id": "cand-005", "stage": "sandbox", "pass": True, "violations": []}
+    stress = {"candidate_id": "cand-005", "stage": "stress", "pass": True, "violations": []}
+    scenario = {"candidate_id": "cand-005", "stage": "scenario", "pass": True, "violations": []}
+    backtest = {
+        "candidate_id": "cand-005",
+        "stage": "backtest",
+        "pass": True,
+        "violations": [{"code": "TAIL_RISK_SPIKE", "severity": "high"}],
+    }
+    stage_policy = {
+        "backtest": {
+            "require_pass": True,
+            "allow_warnings": False,
+            "max_violation_count": 3,
+            "severity_blocklist": ["high", "critical"],
+        }
+    }
+
+    candidate_path = tmp_path / "candidate.json"
+    report_paths = []
+    for name, payload in [
+        ("audit", audit),
+        ("sandbox", sandbox),
+        ("stress", stress),
+        ("scenario", scenario),
+        ("backtest", backtest),
+    ]:
+        path = tmp_path / f"{name}.json"
+        _write_json(path, payload)
+        report_paths.append(path)
+    policy_path = tmp_path / "stage_policy.json"
+    _write_json(candidate_path, candidate)
+    _write_json(policy_path, stage_policy)
+
+    rc = mod.main(
+        [
+            "--candidate",
+            str(candidate_path),
+            "--reports",
+            ",".join(str(path) for path in report_paths),
+            "--required-stages",
+            "audit,sandbox,stress,scenario,backtest",
+            "--stage-policy-json",
+            str(policy_path),
+            "--to-version",
+            "v0.1.2",
+            "--artifacts-dir",
+            str(tmp_path / "decision"),
+            "--rollback-dir",
+            str(tmp_path / "rollback"),
+            "--timestamp",
+            "2026-05-12T10:05:00Z",
+        ]
+    )
+    assert rc == 1
+    payload = json.loads((tmp_path / "decision" / "decision-20260512T100500Z.json").read_text(encoding="utf-8"))
+    assert "REPORT_SEVERITY_BLOCKED" in payload["reason_codes"]
+
+
+def test_decision_gate_default_required_stages_include_stress_scenario_backtest(tmp_path):
+    mod = _load_module("scripts/ci/evolution_decision_gate.py")
+    candidate = {
+        "candidate_id": "cand-006",
+        "trace_id": "trace-006",
+        "constraint_version_base": "v0.1",
+        "evidence_refs": ["artifacts/evolution/feedback/evidence_pack_006.json"],
+        "schema_version": "evolution-p0-candidate-v0.1",
+    }
+    audit = {"candidate_id": "cand-006", "stage": "audit", "pass": True, "violations": []}
+    sandbox = {"candidate_id": "cand-006", "stage": "sandbox", "pass": True, "violations": []}
+    candidate_path = tmp_path / "candidate.json"
+    audit_path = tmp_path / "audit.json"
+    sandbox_path = tmp_path / "sandbox.json"
+    _write_json(candidate_path, candidate)
+    _write_json(audit_path, audit)
+    _write_json(sandbox_path, sandbox)
+
+    rc = mod.main(
+        [
+            "--candidate",
+            str(candidate_path),
+            "--reports",
+            f"{audit_path},{sandbox_path}",
+            "--to-version",
+            "v0.1.2",
+            "--artifacts-dir",
+            str(tmp_path / "decision"),
+            "--rollback-dir",
+            str(tmp_path / "rollback"),
+            "--timestamp",
+            "2026-05-12T10:10:00Z",
+        ]
+    )
+    assert rc == 1
+    payload = json.loads((tmp_path / "decision" / "decision-20260512T101000Z.json").read_text(encoding="utf-8"))
+    assert payload["required_stages"] == ["audit", "sandbox", "stress", "scenario", "backtest"]
+    assert "REPORT_STAGE_MISSING" in payload["reason_codes"]
