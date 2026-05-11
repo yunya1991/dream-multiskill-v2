@@ -10,9 +10,9 @@
 
 ### P0-1 统一消息协议对象
 
-- [x] 新建统一协议模块：`workflows/trading-decision/protocol/message.py`
-- [x] 实现 `MessageHeader` 与 `Envelope` 结构（含字段校验）
-- [x] 落地字段：
+- [ ] 新建统一协议模块（建议：`workflows/trading-decision/protocol/`）
+- [ ] 实现 `MessageHeader` 与 `Envelope` 结构（含字段校验）
+- [ ] 落地字段：
   - `message_id`
   - `timestamp`
   - `version`
@@ -24,98 +24,97 @@
   - `trace_id`
   - `loop_type`
   - `timeout_ms`
-- [x] 各阶段入口输出统一封装为 `{"header": ..., "payload": ...}`（A0-A9 已接入）
+- [ ] 各阶段入口输出统一封装为 `{"header": ..., "payload": ...}`
 
 ### P0-2 统一必填契约字段
 
-- [x] 为 A0-A9 阶段结果补齐（当前通过 orchestrator 统一补齐，A6 原生补齐）：
+- [ ] 为 A0-A9 阶段结果补齐：
   - `constraint_version`
   - `memory_refs[]`
   - `evidence_refs[]`
   - `producer`
   - `schema_version`
-- [x] 在测试中增加缺字段即失败（fail-closed）断言
+- [ ] 在测试中增加缺字段即失败（fail-closed）断言
 
 ### P0-3 A6 五级路由引擎
 
-- [x] 在 A6 增加分级评估器：`L0/L1/L1.5/L2/L3`
-- [x] 实现路由矩阵：
+- [ ] 在 A6 增加分级评估器：`L0/L1/L1.5/L2/L3`
+- [ ] 实现路由矩阵：
   - `L0 -> A9`
   - `L1 -> A4`
   - `L1.5 -> A2`
   - `L2 -> observe/log`
   - `L3 -> A1 + A3`
-- [x] 输出标准化情报事件（`type=EVENT/REQUEST`, `loop_type=intelligence`）
+- [ ] 输出标准化情报事件（`type=EVENT/REQUEST`, `loop_type=intelligence`）
 
 ### P0-4 执行环基础编排器
 
-- [x] 实现 `A1 -> A2 -> A3 -> A4 -> A5 -> A9` 串行调度器
-- [x] 支持失败回跳：
+- [ ] 实现 `A1 -> A2 -> A3 -> A4 -> A5 -> A9` 串行调度器
+- [ ] 支持失败回跳：
   - `A4 fail -> A3`
   - `A5 fail -> A4`
-- [x] 串联统一 `trace_id` 并生成全链路摘要
+- [ ] 串联统一 `trace_id` 并生成全链路摘要
 
 ## 2. P1（应完成）
 
 ### P1-1 治理环编排器
 
-- [x] 实现 `A7 -> A8 -> A2/A3` 调度
-- [x] 实现 `A9 -> A7` 事件触发
-- [x] 实现 A8 定时触发（每日 14:00）接口层（先可本地 cron 适配）
+- [ ] 实现 `A7 -> A8 -> A2/A3` 调度
+- [ ] 实现 `A9 -> A7` 事件触发
+- [ ] 实现 A8 定时触发（每日 14:00）接口层（先可本地 cron 适配）
 
 ### P1-2 传输抽象层（HTTP + MQ）
 
-- [x] 同步通道：HTTP 适配器（执行环、治理环）
-- [x] 异步通道：MQ 适配器（情报环）
-- [x] 提供本地 mock transport，保证单测不依赖外部中间件
+- [ ] 同步通道：HTTP 适配器（执行环、治理环）
+- [ ] 异步通道：MQ 适配器（情报环）
+- [ ] 提供本地 mock transport，保证单测不依赖外部中间件
 
 ### P1-3 状态机与错误语义
 
-- [x] 实现全局状态机（IDLE/SIGNAL/RESEARCH/.../VERIFICATION）
-- [x] 统一错误码：
+- [ ] 实现全局状态机（IDLE/SIGNAL/RESEARCH/.../VERIFICATION）
+- [ ] 统一错误码：
   - `CONSTRAINT_VALIDATION_FAILED`
   - `MEMORY_REFERENCE_MISSING`
   - `EVIDENCE_INCOMPLETE`
   - `SANDBOX_REGRESSION`
-- [x] 实现超时、重试、降级逻辑
+- [ ] 实现超时、重试、降级逻辑
 
 ## 3. P2（增强）
 
 ### P2-1 处罚与信誉机制
 
-- [x] 模块级评分、连续失败惩罚、恢复条件
-- [x] 与治理环审计结果联动
+- [ ] 模块级评分、连续失败惩罚、恢复条件
+- [ ] 与治理环审计结果联动
 
 ### P2-2 可观测性与回放
 
-- [x] 按 `trace_id` 全链路日志索引
-- [x] 增加链路回放工具（输入摘要、输出摘要、耗时、状态）
-- [x] 增加指标导出（成功率、平均耗时、重试率、失败分布）
-- [ ] 增加可视化指标看板（Dashboard UI）
+- [ ] 按 `trace_id` 全链路日志索引
+- [ ] 增加链路回放工具（输入摘要、输出摘要、耗时、状态）
+- [ ] 增加指标看板（成功率、平均耗时、重试率、失败分布）
 
 ## 4. 测试清单
 
-- [x] 协议对象单测：字段完整性、类型校验、非法输入拒绝
-- [x] 执行环编排测试：正常流（A4/A5 回跳下一步补细化场景）
-- [x] 情报环路由测试：L0/L1/L1.5/L2/L3 全覆盖
-- [x] 治理环测试：A9->A7->A8->A2/A3 回写闭环
-- [x] 端到端集成测试：三环并行与冲突场景
-- [x] 门禁测试：协议字段缺失即阻断
+- [ ] 协议对象单测：字段完整性、类型校验、非法输入拒绝
+- [ ] 执行环编排测试：正常流、A4 回跳、A5 回跳
+- [ ] 情报环路由测试：L0/L1/L1.5/L2/L3 全覆盖
+- [ ] 治理环测试：A9->A7->A8->A2/A3 回写闭环
+- [ ] 端到端集成测试：三环并行与冲突场景
+- [ ] 门禁测试：协议字段缺失即阻断
 
 ## 5. 交付物清单
 
-- [x] `workflows/trading-decision/protocol/*`
-- [x] `workflows/trading-decision/orchestrator/*`
-- [x] `workflows/trading-decision/transports/*`
-- [x] `tests/test_trading_protocol_*.py`
-- [x] `tests/test_trading_orchestrator_*.py`
-- [x] `constraints/workflows-spec/trading.md` 同步系统级状态
-- [x] `constraints/workflows-spec/communication-contract-v0.1.md` 增补同步记录
+- [ ] `workflows/trading-decision/protocol/*`
+- [ ] `workflows/trading-decision/orchestrator/*`
+- [ ] `workflows/trading-decision/transports/*`
+- [ ] `tests/test_trading_protocol_*.py`
+- [ ] `tests/test_trading_orchestrator_*.py`
+- [ ] `constraints/workflows-spec/trading.md` 同步系统级状态
+- [ ] `constraints/workflows-spec/communication-contract-v0.1.md` 增补同步记录
 
 ## 6. 完成验收标准
 
-- [x] 三大闭环触发路径全部可执行且有自动化测试覆盖
-- [x] 协议字段在主链产物中全量可追溯
-- [x] 任一阶段失败可定位、可回放、可重试
-- [x] 与记忆 L4 交互具备标准化输入输出契约
-- [x] CI 门禁新增系统级闭环检查并通过
+- [ ] 三大闭环触发路径全部可执行且有自动化测试覆盖
+- [ ] 协议字段在主链产物中全量可追溯
+- [ ] 任一阶段失败可定位、可回放、可重试
+- [ ] 与记忆 L4 交互具备标准化输入输出契约
+- [ ] CI 门禁新增系统级闭环检查并通过

@@ -29,37 +29,32 @@
 - 情报环（Intelligence Loop）：`A6(L0/L1/L1.5/L2/L3) -> A9/A4/A2/observe/A1+A3`
 - 治理环（Governance Loop）：`A0 -> A7 -> A8 -> A2/A3`
 
-## 4. 实现一致性审计（2026-05-11 P1/P2 更新）
+## 4. 实现一致性审计（2026-05-11）
 
 ### 4.1 审计范围
 
 - 对照文档：`constraints/workflows-spec/trading-communication-protocol-v2.md`
 - 对照实现：`workflows/trading-decision/A0~A9/entrypoint.py`
-- 对照测试：`tests/test_trading_*`（当前交易域回归 `29 passed`）
+- 对照测试：`tests/test_trading_decision_a0_a2_entrypoints.py`、`tests/test_trading_decision_a3_a5_entrypoints.py`、`tests/test_trading_decision_a6_a9_entrypoints.py`
 
 ### 4.2 检查结论
 
 - **已实现**
-  - A0-A9 阶段入口函数已存在且可执行，并统一输出 `header + payload`。
-  - 统一协议模块已落地：`workflows/trading-decision/protocol/message.py`。
-  - 执行环编排器已落地：`workflows/trading-decision/orchestrator/execution_loop.py`。
-  - 治理环编排器已落地：`workflows/trading-decision/orchestrator/governance_loop.py`，支持 `A9 -> A7 -> A8 -> A2/A3` 与 `14:00` 触发接口。
-  - 传输抽象层已落地：`workflows/trading-decision/transports/adapters.py`（HTTP/MQ/Mock）。
-  - 状态机与重试降级已落地：`workflows/trading-decision/orchestrator/state_machine.py`。
-  - 治理审计与奖惩联动已落地：`governance_loop` 已接入 `apply_governance_feedback`。
-  - 回放能力已落地：`workflows/trading-decision/orchestrator/replay.py`。
-  - 三环系统编排已落地：`workflows/trading-decision/orchestrator/system_loop.py`。
-  - 系统指标导出已落地：`system_loop` 输出 `success_rate/avg_duration_ms/retry_rate/failure_distribution` 并落盘 JSON。
-  - 协议字段主链可追溯审计门禁已落地：`scripts/ci/trading_traceability_guard.py`，并接入 CI。
-  - 与记忆 L4 标准化 I/O 契约验收已落地：`workflows/trading-decision/orchestrator/memory_l4_contract_bridge.py` + `test_trading_memory_l4_contract_e2e.py`。
-  - CI 已新增系统级闭环测试门禁：`safe-main-merge-gate.yml` 增加 trading system loop、L4 contract 与 traceability guard。
-  - 交易域回归测试通过：`29 passed`。
+  - A0-A9 阶段入口函数已存在且可执行。
+  - 各阶段产物可落地至 `artifacts/trading/`。
+  - 各阶段基础字段 `stage_id`、`trace_id`、`timestamp` 已写入结果。
+  - 分阶段入口测试通过：`13 passed`。
 - **部分实现 / 未实现**
-  - `P2` 可视化指标看板（Dashboard UI）未落地（当前为 JSON 指标导出）。
+  - 未统一实现协议 `header` 对象（`message_id`、`version`、`source`、`target`、`type`、`priority`、`correlation_id`、`loop_type`、`timeout_ms`）。
+  - 未统一实现契约字段：`constraint_version`、`memory_refs[]`、`evidence_refs[]`、`producer`、`schema_version`。
+  - 未实现三大闭环编排器（当前是独立入口函数，不是端到端流程调度）。
+  - 未实现 A6 `L0/L1/L1.5/L2/L3` 分级触发到 A9/A4/A2/A1+A3 的强约束路由。
+  - 未实现治理环 `A7 -> A8 -> A2/A3` 的定时触发（每日 14:00）与自动修正回写。
+  - 未实现协议层传输适配（HTTP/MQ）与重试处罚机制。
 
 ### 4.3 判定
 
-- 当前状态为：**“系统级主链与协议门禁已贯通（P0/P1 + 关键 P2 收口完成）”**，剩余主要是 **“P2 可视化看板增强”**。
+- 当前状态为：**“阶段能力已迁移（函数级）”**，但尚未达到 **“协议与三大闭环编排完整实现（系统级）”**。
 
 ## 5. 技能清单（已迁移）
 
