@@ -72,3 +72,28 @@ def execute_with_retry(
                     "attempts": attempts,
                     "error_code": code,
                 }
+
+
+def apply_governance_feedback(
+    *,
+    ledger: ReputationLedger,
+    a7_output: Dict[str, Any],
+    a8_output: Dict[str, Any],
+) -> Dict[str, int]:
+    a7_status = str(a7_output.get("audit_status") or "REVIEW").upper()
+    violations = list(a7_output.get("violations") or [])
+    gap_score = float(a8_output.get("gap_score") or 1.0)
+
+    if a7_status != "PASS" or violations:
+        ledger.penalize("A7", delta=10)
+    else:
+        ledger.recover("A7", delta=5)
+
+    if gap_score > 0.3:
+        ledger.penalize("A8", delta=10)
+    elif gap_score > 0.1:
+        ledger.penalize("A8", delta=5)
+    else:
+        ledger.recover("A8", delta=5)
+
+    return {"A7": ledger.score("A7"), "A8": ledger.score("A8")}

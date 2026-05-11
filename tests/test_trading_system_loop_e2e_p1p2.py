@@ -55,3 +55,8 @@ def test_system_loop_runs_three_loops_and_collects_metrics(tmp_path: Path):
     assert set(out["loops"].keys()) == {"execution", "intelligence", "governance"}
     assert out["metrics"]["message_count"] >= 3
     assert out["metrics"]["loop_count"] == 3
+    assert "success_rate" in out["metrics"]
+    assert "avg_duration_ms" in out["metrics"]
+    assert "retry_rate" in out["metrics"]
+    assert "failure_distribution" in out["metrics"]
+    assert Path(out["metrics_artifact_path"]).exists()

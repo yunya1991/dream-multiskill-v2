@@ -22,6 +22,11 @@ def _load_protocol_module():
     return _load_module(path, "trading_protocol_message")
 
 
+def _load_state_module():
+    path = Path(__file__).resolve().parent / "state_machine.py"
+    return _load_module(path, "trading_state_machine")
+
+
 def _default_stage_runners() -> Dict[str, StageRunner]:
     root = Path(__file__).resolve().parents[1]
     mapping = {
@@ -68,10 +73,13 @@ def run_governance_loop(
     now_ts: Optional[str] = None,
 ) -> Dict[str, Any]:
     proto = _load_protocol_module()
+    state_mod = _load_state_module()
     runners = stage_runners or _default_stage_runners()
     trace_id = str(payload.get("trace_id") or "trace-missing")
     correlation_id = payload.get("correlation_id")
     now_value = now_ts or datetime.now(timezone.utc).isoformat()
+    trigger_source = str(payload.get("trigger_source") or "event").lower()
+    ledger = state_mod.ReputationLedger()
 
     stage_outputs: Dict[str, Dict[str, Any]] = {}
     messages = []
@@ -93,7 +101,8 @@ def run_governance_loop(
     visited_stages.append("A7")
     next_input.update(a7_out)
 
-    if should_trigger_a8(now_value):
+    should_run_a8 = trigger_source == "event" or should_trigger_a8(now_value)
+    if should_run_a8:
         messages.append(_transition_message(proto, "A7", "A8", trace_id, correlation_id, a7_out))
         a8_out = proto.envelope_payload(runners["A8"](next_input, output_dir=output_dir))
         a8_out = proto.ensure_contract_fields(a8_out, producer="workflows/trading-decision/A8")
@@ -112,10 +121,18 @@ def run_governance_loop(
         proto.require_contract_fields(target_out)
         stage_outputs[target] = target_out
         visited_stages.append(target)
+        reputation = state_mod.apply_governance_feedback(
+            ledger=ledger,
+            a7_output=a7_out,
+            a8_output=a8_out,
+        )
+    else:
+        reputation = {"A7": ledger.score("A7"), "A8": ledger.score("A8")}
 
     return {
         "trace_id": trace_id,
         "visited_stages": visited_stages,
         "stage_outputs": stage_outputs,
         "messages": messages,
+        "reputation": reputation,
     }

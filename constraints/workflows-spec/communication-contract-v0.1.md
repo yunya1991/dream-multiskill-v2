@@ -154,3 +154,4 @@ evolution --审核发布--> constraints
 - `2026-05-11T04:40:00Z`：完成 P0 第一轮实现：新增统一协议模块 `workflows/trading-decision/protocol/message.py`、A6 五级路由能力、执行环编排器 `workflows/trading-decision/orchestrator/execution_loop.py` 及对应测试。
 - `2026-05-11T05:20:00Z`：完成 P0 收尾：A0-A9 全部入口统一 envelope 输出（`header + payload`），并新增 fail-closed 测试（缺 `trace_id`/契约字段即阻断）。
 - `2026-05-11T06:30:00Z`：完成 P1/P2 主体：新增治理环编排 `orchestrator/governance_loop.py`、三环系统编排 `orchestrator/system_loop.py`、传输适配 `transports/adapters.py`、状态机与重试处罚 `orchestrator/state_machine.py`、回放能力 `orchestrator/replay.py`，并补齐系统级测试。
+- `2026-05-11T07:20:00Z`：完成系统级收口：治理环触发语义调整为事件优先（A7 完成即触发 A8，保留 14:00 定时接口）、新增治理审计与信誉联动、系统指标导出（success/retry/failure/duration）与 CI 系统级闭环门禁。

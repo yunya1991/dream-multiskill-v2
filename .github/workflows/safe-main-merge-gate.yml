@@ -49,6 +49,13 @@ jobs:
         run: |
           python scripts/ci/architecture_sync_guard.py
 
+      - name: Run trading system loop gate tests
+        run: |
+          pytest tests/test_trading_protocol_fail_closed_p0.py \
+            tests/test_trading_governance_orchestrator_p1.py \
+            tests/test_trading_system_loop_e2e_p1p2.py \
+            tests/test_trading_replay_observability_p2.py -q
+
       - name: Run review policy guard
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

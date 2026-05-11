@@ -41,3 +41,22 @@ def test_a8_daily_trigger_only_runs_at_1400_utc():
     mod = _load_module("workflows/trading-decision/orchestrator/governance_loop.py")
     assert mod.should_trigger_a8("2026-05-11T14:00:00+00:00")
     assert not mod.should_trigger_a8("2026-05-11T13:59:00+00:00")
+
+
+def test_governance_event_trigger_runs_a8_even_when_not_1400(tmp_path: Path):
+    mod = _load_module("workflows/trading-decision/orchestrator/governance_loop.py")
+    out = mod.run_governance_loop(
+        {
+            "trace_id": "trace-gov-2",
+            "unrealized_pnl_pct": 0.5,
+            "risk_level": "low",
+            "violations": [],
+            "hypothesis_score": 0.88,
+            "practice_score": 0.80,
+        },
+        output_dir=tmp_path,
+        now_ts="2026-05-11T13:00:00+00:00",
+    )
+    assert "A8" in out["visited_stages"]
+    assert "A2" in out["visited_stages"] or "A3" in out["visited_stages"]
+    assert "reputation" in out

@@ -50,3 +50,22 @@ def test_retry_returns_degraded_when_exhausted():
     out = mod.execute_with_retry(always_fail, max_retries=1, ledger=ledger, module_name="A2")
     assert out["status"] == "DEGRADED"
     assert out["error_code"] == "CONSTRAINT_VALIDATION_FAILED"
+
+
+def test_governance_feedback_penalizes_and_recovers_score():
+    mod = _load_module("workflows/trading-decision/orchestrator/state_machine.py")
+    ledger = mod.ReputationLedger()
+    mod.apply_governance_feedback(
+        ledger=ledger,
+        a7_output={"audit_status": "REVIEW", "violations": [{"id": "v1"}]},
+        a8_output={"gap_score": 0.35},
+    )
+    assert ledger.score("A7") < 100
+    assert ledger.score("A8") < 100
+
+    mod.apply_governance_feedback(
+        ledger=ledger,
+        a7_output={"audit_status": "PASS", "violations": []},
+        a8_output={"gap_score": 0.02},
+    )
+    assert ledger.score("A7") >= 90
