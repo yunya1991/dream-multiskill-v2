@@ -13,18 +13,15 @@ ERROR_CODES = {
 
 class TradingStateMachine:
     VALID = {
-        "IDLE": {"SIGNAL"},
-        "SIGNAL": {"RESEARCH"},
+        "IDLE": {"RESEARCH"},
         "RESEARCH": {"ANALYZING"},
         "ANALYZING": {"STRATEGIZING"},
         "STRATEGIZING": {"VALIDATING"},
         "VALIDATING": {"EXECUTING"},
-        "EXECUTING": {"MONITORING"},
-        "MONITORING": {"ALERT", "EXIT"},
-        "ALERT": {"EXIT"},
+        "EXECUTING": {"EXIT"},
         "EXIT": {"PRACTICE"},
         "PRACTICE": {"VERIFICATION"},
-        "VERIFICATION": {"RESEARCH", "ANALYZING", "IDLE"},
+        "VERIFICATION": {"RESEARCH", "ANALYZING", "STRATEGIZING", "IDLE"},
     }
 
     def __init__(self) -> None:

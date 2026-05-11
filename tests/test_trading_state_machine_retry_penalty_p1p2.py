@@ -23,6 +23,33 @@ def test_state_machine_rejects_invalid_transition():
         sm.transition("EXECUTION")
 
 
+def test_state_machine_idle_to_research():
+    """Per v2.1 spec: IDLE transitions directly to RESEARCH (no SIGNAL)."""
+    mod = _load_module("workflows/trading-decision/orchestrator/state_machine.py")
+    sm = mod.TradingStateMachine()
+    assert sm.current == "IDLE"
+    sm.transition("RESEARCH")
+    assert sm.current == "RESEARCH"
+
+
+def test_state_machine_verification_routes_to_research():
+    """A8 gap < 0.5 routes back to RESEARCH (A1 restart)."""
+    mod = _load_module("workflows/trading-decision/orchestrator/state_machine.py")
+    sm = mod.TradingStateMachine()
+    # Simulate full loop
+    sm.transition("RESEARCH")
+    sm.transition("ANALYZING")
+    sm.transition("STRATEGIZING")
+    sm.transition("VALIDATING")
+    sm.transition("EXECUTING")
+    sm.transition("EXIT")
+    sm.transition("PRACTICE")
+    sm.transition("VERIFICATION")
+    # From VERIFICATION, can route back to RESEARCH for A1 restart
+    sm.transition("RESEARCH")
+    assert sm.current == "RESEARCH"
+
+
 def test_retry_and_penalty_accumulates_then_succeeds():
     mod = _load_module("workflows/trading-decision/orchestrator/state_machine.py")
     ledger = mod.ReputationLedger()

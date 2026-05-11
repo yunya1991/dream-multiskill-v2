@@ -37,7 +37,7 @@ def test_system_loop_runs_three_loops_and_collects_metrics(tmp_path: Path):
     def fake_governance(payload, output_dir=None, now_ts=None):
         return {
             "trace_id": payload["trace_id"],
-            "visited_stages": ["A9", "A7", "A8", "A2"],
+            "visited_stages": ["A7", "A8", "A3"],
             "stage_outputs": {"A8": {"stage_id": "A8", "trace_id": payload["trace_id"]}},
             "messages": [{"header": {"loop_type": "governance"}, "payload": {"stage_id": "A8"}}],
         }
