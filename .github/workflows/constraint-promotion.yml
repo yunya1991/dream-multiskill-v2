@@ -1,0 +1,42 @@
+name: Constraint Promotion
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_json:
+        description: "Promotion or decision JSON path"
+        required: false
+        default: "artifacts/evolution/decision/promotion-20260512T103000Z.json"
+      release_version:
+        description: "Release version to snapshot"
+        required: false
+        default: "v0.1.2"
+
+permissions:
+  contents: read
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build release snapshot artifact
+        run: |
+          python scripts/ci/constraint_release_snapshot.py \
+            --source-json "${{ github.event.inputs.source_json || 'artifacts/evolution/decision/promotion-20260512T103000Z.json' }}" \
+            --release-version "${{ github.event.inputs.release_version || 'v0.1.2' }}" \
+            --output-dir artifacts/evolution/promotion/releases
+
+      - name: Upload promotion artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: constraint-promotion-${{ github.run_id }}
+          path: artifacts/evolution/promotion/releases/*.json
+          if-no-files-found: error

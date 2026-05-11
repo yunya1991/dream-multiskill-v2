@@ -1,0 +1,42 @@
+name: Evolution Default Smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "5 4 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run default green-path smoke
+        run: |
+          python scripts/ci/evolution_decision_gate.py \
+            --candidate artifacts/evolution/feedback/candidate_positive_20260511.json \
+            --reports "artifacts/evolution/audit/audit_positive_20260511.json,artifacts/evolution/sandbox/sandbox_positive_20260511.json,artifacts/evolution/stress/stress_positive_20260512.json,artifacts/evolution/scenario/scenario_positive_20260512.json,artifacts/evolution/backtest/backtest_positive_20260512.json" \
+            --required-stages "audit,sandbox,stress,scenario,backtest" \
+            --to-version v0.1.2 \
+            --policy-version p1.relaxed-scenario.v1 \
+            --policy-library-dir artifacts/evolution/policy/templates \
+            --artifacts-dir artifacts/evolution/decision \
+            --rollback-dir artifacts/evolution/rollback
+
+      - name: Upload smoke artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: evolution-default-smoke-${{ github.run_id }}
+          path: |
+            artifacts/evolution/decision/*.json
+            artifacts/evolution/rollback/*.json
+          if-no-files-found: error

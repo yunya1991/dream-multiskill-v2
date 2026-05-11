@@ -1,0 +1,57 @@
+name: Evolution Validation Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_path:
+        description: "Candidate JSON path"
+        required: false
+        default: "artifacts/evolution/feedback/candidate_positive_20260511.json"
+      report_paths:
+        description: "Comma-separated ValidationReport JSON paths"
+        required: false
+        default: "artifacts/evolution/audit/audit_positive_20260511.json,artifacts/evolution/sandbox/sandbox_positive_20260511.json,artifacts/evolution/stress/stress_positive_20260512.json,artifacts/evolution/scenario/scenario_positive_20260512.json,artifacts/evolution/backtest/backtest_positive_20260512.json"
+      to_version:
+        description: "Target version"
+        required: false
+        default: "v0.1.2"
+      policy_version:
+        description: "Policy version"
+        required: false
+        default: "p1.relaxed-scenario.v1"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run validation gate
+        run: |
+          python scripts/ci/evolution_decision_gate.py \
+            --candidate "${{ github.event.inputs.candidate_path || 'artifacts/evolution/feedback/candidate_positive_20260511.json' }}" \
+            --reports "${{ github.event.inputs.report_paths || 'artifacts/evolution/audit/audit_positive_20260511.json,artifacts/evolution/sandbox/sandbox_positive_20260511.json,artifacts/evolution/stress/stress_positive_20260512.json,artifacts/evolution/scenario/scenario_positive_20260512.json,artifacts/evolution/backtest/backtest_positive_20260512.json' }}" \
+            --required-stages "audit,sandbox,stress,scenario,backtest" \
+            --to-version "${{ github.event.inputs.to_version || 'v0.1.2' }}" \
+            --policy-version "${{ github.event.inputs.policy_version || 'p1.relaxed-scenario.v1' }}" \
+            --policy-library-dir artifacts/evolution/policy/templates \
+            --artifacts-dir artifacts/evolution/decision \
+            --rollback-dir artifacts/evolution/rollback
+
+      - name: Upload validation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: evolution-validation-gate-${{ github.run_id }}
+          path: |
+            artifacts/evolution/decision/*.json
+            artifacts/evolution/rollback/*.json
+          if-no-files-found: error
