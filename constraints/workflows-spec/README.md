@@ -11,6 +11,7 @@
 - `evolution-p0-state-machine-errors.md`：P0 状态机与错误码字典
 - `evolution-p0-acceptance-checklist.md`：P0 验收清单与 Go/No-Go 步骤
 - `evolution-p0-acceptance-report-2026-05-11.md`：P0 Day1 手工验收报告（正/反样本 + Go/No-Go）
+- `evolution-p0-acceptance-report-2026-05-12.md`：P0 Day2 自动化验收报告（Decision Gate + rollback pointer）
 - `evolution-p0-decision-gate-spec-v0.1.md`：P0 Day2 Decision Gate 可执行规则与错误码映射
 - `evolution-p0-rollback-pointer-spec-v0.1.md`：P0 Day2 rollback pointer 数据契约与恢复约定
 - `communication-contract-v0.1.md`：三层通信调用与闭环升级契约
