@@ -16,3 +16,7 @@
 2. 使用至少 1 条反样本候选触发 `C_FAIL`
 3. 校验两条样本均存在完整 `evidence_refs`
 4. 记录验收报告与结论（Go/No-Go）
+
+## Latest Run
+
+- `2026-05-11`：已完成 Day1 手工验收，报告见 `constraints/workflows-spec/evolution-p0-acceptance-report-2026-05-11.md`。
