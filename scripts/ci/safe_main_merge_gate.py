@@ -81,6 +81,7 @@ def check_rules(event: dict, changed_files: List[str]) -> Tuple[List[str], List[
             or "state_machine" in path
             or "transports" in path
             or "replay" in path
+            or "memory_l4_contract" in path
         )
         for path in changed_files
     )

@@ -17,3 +17,4 @@
 - `a0-a9-system-level-implementation-checklist.md`（2026-05-11 更新）：P0 收尾完成（全阶段 envelope 输出 + fail-closed 门禁测试）
 - `a0-a9-system-level-implementation-checklist.md`（2026-05-11 更新）：P1/P2 主体落地（治理环编排、transport 抽象、状态机重试处罚、回放与三环系统编排）
 - `a0-a9-system-level-implementation-checklist.md`（2026-05-11 更新）：系统级收口完成（治理环触发语义修正、治理奖惩联动、指标导出、CI 系统级闭环门禁）
+- `a0-a9-system-level-implementation-checklist.md`（2026-05-11 更新）：最终收尾完成（协议字段主链可追溯审计门禁 + 与记忆 L4 标准化 I/O 契约系统级验收）

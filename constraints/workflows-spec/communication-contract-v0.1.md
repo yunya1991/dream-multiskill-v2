@@ -155,5 +155,6 @@ evolution --审核发布--> constraints
 - `2026-05-11T05:20:00Z`：完成 P0 收尾：A0-A9 全部入口统一 envelope 输出（`header + payload`），并新增 fail-closed 测试（缺 `trace_id`/契约字段即阻断）。
 - `2026-05-11T06:30:00Z`：完成 P1/P2 主体：新增治理环编排 `orchestrator/governance_loop.py`、三环系统编排 `orchestrator/system_loop.py`、传输适配 `transports/adapters.py`、状态机与重试处罚 `orchestrator/state_machine.py`、回放能力 `orchestrator/replay.py`，并补齐系统级测试。
 - `2026-05-11T07:20:00Z`：完成系统级收口：治理环触发语义调整为事件优先（A7 完成即触发 A8，保留 14:00 定时接口）、新增治理审计与信誉联动、系统指标导出（success/retry/failure/duration）与 CI 系统级闭环门禁。
+- `2026-05-11T08:50:00Z`：完成最终尾项收口：新增主链协议字段可追溯审计门禁 `scripts/ci/trading_traceability_guard.py`，新增 trading↔memory L4 标准 I/O 契约桥接 `orchestrator/memory_l4_contract_bridge.py` 与系统级验收测试，并接入 safe main merge gate。
 - `2026-05-11T08:00:00Z`：完成协议与记忆收尾：新增主链字段可追溯审计门禁 `scripts/ci/trading_traceability_guard.py`，新增 trading↔memory L4 标准 I/O 契约桥接 `orchestrator/memory_l4_contract_bridge.py` 与系统级验收测试，并接入 `safe-main-merge-gate.yml`。
 - `2026-05-11T09:00:00Z`：同步 `workflows/memory/memory_engine/consistency.py` 健康分计算策略更新（缺失级别改为 partial credit），该变更不引入字段或错误语义破坏，维持 `v0.1` 契约兼容。

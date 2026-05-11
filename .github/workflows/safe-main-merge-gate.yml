@@ -59,7 +59,49 @@ jobs:
           pytest tests/test_trading_protocol_fail_closed_p0.py \
             tests/test_trading_governance_orchestrator_p1.py \
             tests/test_trading_system_loop_e2e_p1p2.py \
-            tests/test_trading_replay_observability_p2.py -q
+            tests/test_trading_replay_observability_p2.py \
+            tests/test_trading_memory_l4_contract_e2e.py \
+            tests/test_ci_trading_traceability_guard.py -q
+
+      - name: Generate trading artifacts for traceability audit
+        run: |
+          python - <<'PY'
+          import importlib.util
+          from pathlib import Path
+
+          root = Path.cwd()
+          mod_path = root / "workflows" / "trading-decision" / "orchestrator" / "execution_loop.py"
+          spec = importlib.util.spec_from_file_location("execution_loop", mod_path)
+          module = importlib.util.module_from_spec(spec)
+          assert spec and spec.loader
+          spec.loader.exec_module(module)
+
+          payload = {
+              "trace_id": "trace-ci-traceability-1",
+              "signals": ["macro"],
+              "confidence": 0.8,
+              "rsi": 52,
+              "funding_rate": 0.0,
+              "fgi": 55,
+              "signal_score": 62,
+              "volatility": 0.02,
+              "market_regime": "trend",
+              "max_drawdown_pct": 1.2,
+              "position_ratio": 0.25,
+              "stop_loss_pct": 1.5,
+              "direction": "LONG",
+              "entry_price": 65000,
+              "leverage": 2,
+              "unrealized_pnl_pct": 1.0,
+              "risk_level": "low",
+          }
+          out = module.run_execution_loop(payload, output_dir=root / "artifacts" / "trading")
+          print("Generated trace:", out["trace_id"])
+          PY
+
+      - name: Run trading traceability guard
+        run: |
+          python scripts/ci/trading_traceability_guard.py --artifacts-dir artifacts/trading --min-files 1
 
       - name: Run review policy guard
         env:
