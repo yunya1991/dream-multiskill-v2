@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 
-REPO_ROOT = Path("/Users/zhangjiangtao/WorkBuddy/dream-multiskill-v2")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _load_module(rel_path: str):
@@ -36,4 +36,3 @@ def test_a1_entrypoint_fail_closed_when_trace_id_missing(tmp_path: Path):
     mod = _load_module("workflows/trading-decision/A1_research/entrypoint.py")
     with pytest.raises(ValueError):
         mod.run_a1_research({"signals": ["x"], "confidence": 0.5}, output_dir=tmp_path)
-
