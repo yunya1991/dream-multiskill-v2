@@ -47,6 +47,11 @@ def test_arch_guard_allows_workbuddy_top_level_directory():
     assert result.returncode == 0, result.stderr
 
 
+def test_arch_guard_allows_quoted_paths_for_non_ascii_names():
+    result = _run_guard(['"skills/3-SUPPORT/boss-secretary/reports/trading/日报.md"'])
+    assert result.returncode == 0, result.stderr
+
+
 def test_arch_guard_fails_if_docs_architecture_not_synced():
     result = _run_guard(["docs/architecture.md"])
     assert result.returncode == 1
