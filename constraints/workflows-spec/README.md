@@ -17,6 +17,7 @@
 - `evolution-p1-stage-policy-spec-v0.1.md`：P1 多门禁 `stage_policy` 独立判定策略规范
 - `evolution-p1-acceptance-report-2026-05-12.md`：P1 多门禁聚合验收报告（stress/scenario/backtest + stage_policy）
 - `communication-contract-v0.1.md`：三层通信调用与闭环升级契约
+- `trading-communication-protocol-v2.md`：A0-A9 通信协议与定时驱动架构（v2.1，2026-05-12 更新：A0 集成化 + 治理环重构 + 定时调度）
 - `memory.md`（2026-05-10 更新）：新增 L1~L4 显式入口映射与 `MemoryEngine` 调用对齐约定
 - `trading.md`（2026-05-10 更新）：新增 A0-A9 显式入口映射与三批技能迁移清单
 - `a0-a9-fullchain-checklist.md`：A0-A9 全链路迁移对照清单（源仓 vs 本地仓）

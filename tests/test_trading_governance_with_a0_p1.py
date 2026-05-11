@@ -15,41 +15,34 @@ def _load_module(rel_path: str):
 
 
 # ---------------------------------------------------------------------------
-# 1. Governance loop A0→A7→A8→A2 full chain
+# 1. Governance loop A7→A8→A1/A2/A3 full chain
 # ---------------------------------------------------------------------------
 
-def test_governance_loop_runs_a0_then_a9_a7_a8_a2(tmp_path: Path):
-    """Per spec: governance loop starts with A0(矛盾监控) before A7/A8."""
+def test_governance_loop_runs_a7_then_a8_then_a1(tmp_path: Path):
+    """Per spec: governance loop starts with A7(practice), then A8(verification), then routes based on gap_score."""
     mod = _load_module("workflows/trading-decision/orchestrator/governance_loop.py")
     out = mod.run_governance_loop(
         {
-            "trace_id": "trace-gov-a0",
-            "contradictions": [
-                {"id": "cx_macro", "score": 2.5, "direction": "DOWN"},
-            ],
+            "trace_id": "trace-gov-a1",
             "unrealized_pnl_pct": 1.2,
             "risk_level": "medium",
             "violations": [],
-            "hypothesis_score": 0.74,
-            "practice_score": 0.71,
+            "hypothesis_score": 0.95,
+            "practice_score": 0.40,  # gap = 0.55 → A2 (中度背离)
         },
         output_dir=tmp_path,
-        now_ts="2026-05-11T14:00:00+00:00",
     )
-    # A0 must be the first visited stage
-    assert out["visited_stages"][0] == "A0"
-    assert "A0" in out["stage_outputs"]
-    # A0 output should contain the primary contradiction
-    a0_payload = out["stage_outputs"]["A0"]
-    assert a0_payload.get("primary_contradiction", {}).get("id") == "cx_macro"
+    # A7 must be the first visited stage
+    assert out["visited_stages"][0] == "A7"
+    assert "A7" in out["stage_outputs"]
 
 
 # ---------------------------------------------------------------------------
-# 2. Knowledge-synthesis routing: gap ≤ 0.1 → A2, gap > 0.1 → A3
+# 2. Knowledge-synthesis routing: gap_score → A1/A2/A3
 # ---------------------------------------------------------------------------
 
-def test_gap_score_005_routes_to_a2(tmp_path: Path):
-    """gap_score ≤ 0.1 should route to A2 (first principles update)."""
+def test_gap_score_055_routes_to_a2(tmp_path: Path):
+    """gap_score 0.5-0.7 should route to A2 (重新分析)."""
     mod = _load_module("workflows/trading-decision/orchestrator/governance_loop.py")
     out = mod.run_governance_loop(
         {
@@ -57,17 +50,16 @@ def test_gap_score_005_routes_to_a2(tmp_path: Path):
             "unrealized_pnl_pct": 0.5,
             "risk_level": "low",
             "violations": [],
-            "hypothesis_score": 0.72,
-            "practice_score": 0.70,  # gap = 0.02
+            "hypothesis_score": 0.95,
+            "practice_score": 0.40,  # gap = 0.55
         },
         output_dir=tmp_path,
-        now_ts="2026-05-11T14:00:00+00:00",
     )
     assert "A2" in out["visited_stages"]
 
 
-def test_gap_score_025_routes_to_a3(tmp_path: Path):
-    """gap_score > 0.1 should route to A3 (simulation update)."""
+def test_gap_score_080_routes_to_a3(tmp_path: Path):
+    """gap_score > 0.7 should route to A3 (策略微调)."""
     mod = _load_module("workflows/trading-decision/orchestrator/governance_loop.py")
     out = mod.run_governance_loop(
         {
@@ -75,13 +67,29 @@ def test_gap_score_025_routes_to_a3(tmp_path: Path):
             "unrealized_pnl_pct": 0.5,
             "risk_level": "low",
             "violations": [],
-            "hypothesis_score": 0.80,
-            "practice_score": 0.55,  # gap = 0.25
+            "hypothesis_score": 0.95,
+            "practice_score": 0.15,  # gap = 0.80
         },
         output_dir=tmp_path,
-        now_ts="2026-05-11T14:00:00+00:00",
     )
     assert "A3" in out["visited_stages"]
+
+
+def test_gap_score_030_routes_to_a1(tmp_path: Path):
+    """gap_score < 0.5 should route to A1 (重启调研)."""
+    mod = _load_module("workflows/trading-decision/orchestrator/governance_loop.py")
+    out = mod.run_governance_loop(
+        {
+            "trace_id": "trace-gap-a1",
+            "unrealized_pnl_pct": 0.5,
+            "risk_level": "low",
+            "violations": [],
+            "hypothesis_score": 0.90,
+            "practice_score": 0.50,  # gap = 0.40
+        },
+        output_dir=tmp_path,
+    )
+    assert "A1" in out["visited_stages"]
 
 
 # ---------------------------------------------------------------------------
@@ -134,62 +142,3 @@ def test_reputation_recovery_after_success(tmp_path: Path):
     )
     score_high = ledger.score("A7")
     assert score_high > score_low
-
-
-# ---------------------------------------------------------------------------
-# 4. Daily 14:00 trigger vs event trigger
-# ---------------------------------------------------------------------------
-
-def test_governance_a8_triggered_by_daily_schedule(tmp_path: Path):
-    """A8 should run at exactly 14:00 UTC."""
-    mod = _load_module("workflows/trading-decision/orchestrator/governance_loop.py")
-    out = mod.run_governance_loop(
-        {
-            "trace_id": "trace-daily",
-            "unrealized_pnl_pct": 0.3,
-            "risk_level": "low",
-            "violations": [],
-            "hypothesis_score": 0.80,
-            "practice_score": 0.78,
-        },
-        output_dir=tmp_path,
-        now_ts="2026-05-11T14:00:00+00:00",
-    )
-    assert "A8" in out["visited_stages"]
-
-
-def test_governance_a8_triggered_by_event_off_schedule(tmp_path: Path):
-    """Event trigger should run A8 even when not 14:00."""
-    mod = _load_module("workflows/trading-decision/orchestrator/governance_loop.py")
-    out = mod.run_governance_loop(
-        {
-            "trace_id": "trace-event",
-            "trigger_source": "event",
-            "unrealized_pnl_pct": 0.3,
-            "risk_level": "low",
-            "violations": [],
-            "hypothesis_score": 0.80,
-            "practice_score": 0.78,
-        },
-        output_dir=tmp_path,
-        now_ts="2026-05-11T09:00:00+00:00",  # not 14:00
-    )
-    assert "A8" in out["visited_stages"]
-
-
-def test_governance_a8_runs_by_default_after_a7(tmp_path: Path):
-    """Default event trigger always runs A8 after A7 (知行合一 check)."""
-    mod = _load_module("workflows/trading-decision/orchestrator/governance_loop.py")
-    out = mod.run_governance_loop(
-        {
-            "trace_id": "trace-default-a8",
-            "unrealized_pnl_pct": 0.3,
-            "risk_level": "low",
-            "violations": [],
-        },
-        output_dir=tmp_path,
-        now_ts="2026-05-11T09:00:00+00:00",  # not 14:00
-    )
-    # Default trigger_source is "event" → A8 runs
-    assert "A8" in out["visited_stages"]
-    assert "reputation" in out

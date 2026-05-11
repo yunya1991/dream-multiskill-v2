@@ -19,7 +19,7 @@ def _payload(out):
 
 
 # ---------------------------------------------------------------------------
-# 1. Full A0→A1→A2→A3→A4→A5→A6→A9 chain
+# 1. Full A1→A2→A3→A4→A5→A6→A9 chain (A0 integrated into A1/A2/A3)
 # ---------------------------------------------------------------------------
 
 def _full_chain_payload():
@@ -48,9 +48,10 @@ def _full_chain_payload():
     }
 
 
-def test_full_chain_a0_through_a9_all_envelopes_valid(tmp_path: Path):
-    """Verify each stage in the execution chain produces valid envelope with correct source→target routing."""
-    a0 = _load_module("workflows/trading-decision/A0_contradiction/entrypoint.py")
+def test_full_chain_a1_through_a9_all_envelopes_valid(tmp_path: Path):
+    """Verify each stage in the execution chain produces valid envelope with correct source→target routing.
+    A0 contradiction analysis is integrated inside A1/A2/A3, not a standalone stage.
+    """
     a1 = _load_module("workflows/trading-decision/A1_research/entrypoint.py")
     a2 = _load_module("workflows/trading-decision/A2_first-principles/entrypoint.py")
     a3 = _load_module("workflows/trading-decision/A3_simulation/entrypoint.py")
@@ -61,12 +62,6 @@ def test_full_chain_a0_through_a9_all_envelopes_valid(tmp_path: Path):
 
     payload = _full_chain_payload()
     tid = payload["trace_id"]
-
-    # A0 → A1
-    out = a0.run_a0_contradiction_analysis(payload)
-    assert out["header"]["source"] == "A0"
-    assert out["header"]["target"] == "A1"
-    assert _payload(out)["stage_id"] == "A0"
 
     # A1 → A2
     out = a1.run_a1_research(payload, output_dir=tmp_path)

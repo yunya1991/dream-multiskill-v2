@@ -14,7 +14,7 @@ def _load_module(rel_path: str):
     return module
 
 
-def test_governance_loop_runs_a9_a7_a8_and_routes_to_a2(tmp_path: Path):
+def test_governance_loop_runs_a7_a8_and_routes_to_a3(tmp_path: Path):
     mod = _load_module("workflows/trading-decision/orchestrator/governance_loop.py")
 
     out = mod.run_governance_loop(
@@ -23,27 +23,20 @@ def test_governance_loop_runs_a9_a7_a8_and_routes_to_a2(tmp_path: Path):
             "unrealized_pnl_pct": 1.2,
             "risk_level": "medium",
             "violations": [],
-            "hypothesis_score": 0.74,
-            "practice_score": 0.71,
+            "hypothesis_score": 0.95,
+            "practice_score": 0.10,  # gap = 0.85 → A3
         },
         output_dir=tmp_path,
-        now_ts="2026-05-11T14:00:00+00:00",
     )
 
     assert out["trace_id"] == "trace-gov-1"
-    assert out["visited_stages"][:4] == ["A0", "A9", "A7", "A8"]
-    assert out["visited_stages"][-1] == "A2"
-    assert {"A0", "A9", "A7", "A8", "A2"}.issubset(set(out["stage_outputs"].keys()))
+    assert out["visited_stages"][:2] == ["A7", "A8"]
+    assert out["visited_stages"][-1] == "A3"
+    assert {"A7", "A8", "A3"}.issubset(set(out["stage_outputs"].keys()))
     assert any(m["header"]["loop_type"] == "governance" for m in out["messages"])
 
 
-def test_a8_daily_trigger_only_runs_at_1400_utc():
-    mod = _load_module("workflows/trading-decision/orchestrator/governance_loop.py")
-    assert mod.should_trigger_a8("2026-05-11T14:00:00+00:00")
-    assert not mod.should_trigger_a8("2026-05-11T13:59:00+00:00")
-
-
-def test_governance_event_trigger_runs_a8_even_when_not_1400(tmp_path: Path):
+def test_governance_event_trigger_routes_by_gap(tmp_path: Path):
     mod = _load_module("workflows/trading-decision/orchestrator/governance_loop.py")
     out = mod.run_governance_loop(
         {
@@ -52,11 +45,26 @@ def test_governance_event_trigger_runs_a8_even_when_not_1400(tmp_path: Path):
             "risk_level": "low",
             "violations": [],
             "hypothesis_score": 0.88,
-            "practice_score": 0.80,
+            "practice_score": 0.80,  # gap = 0.08 → A1
         },
         output_dir=tmp_path,
-        now_ts="2026-05-11T13:00:00+00:00",
     )
     assert "A8" in out["visited_stages"]
-    assert "A2" in out["visited_stages"] or "A3" in out["visited_stages"]
+    assert "A1" in out["visited_stages"]
+    assert "reputation" in out
+
+
+def test_governance_loop_always_runs_a8(tmp_path: Path):
+    """Governance loop always runs A8 after A7 for 知行合一 check."""
+    mod = _load_module("workflows/trading-decision/orchestrator/governance_loop.py")
+    out = mod.run_governance_loop(
+        {
+            "trace_id": "trace-default-a8",
+            "unrealized_pnl_pct": 0.3,
+            "risk_level": "low",
+            "violations": [],
+        },
+        output_dir=tmp_path,
+    )
+    assert "A8" in out["visited_stages"]
     assert "reputation" in out
