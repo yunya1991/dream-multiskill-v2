@@ -10,11 +10,19 @@ on:
       report_paths:
         description: "Comma-separated ValidationReport JSON paths"
         required: false
-        default: "artifacts/evolution/audit/audit_positive_20260511.json,artifacts/evolution/sandbox/sandbox_positive_20260511.json"
+        default: "artifacts/evolution/audit/audit_positive_20260511.json,artifacts/evolution/sandbox/sandbox_positive_20260511.json,artifacts/evolution/stress/stress_positive_20260512.json,artifacts/evolution/scenario/scenario_positive_20260512.json,artifacts/evolution/backtest/backtest_positive_20260512.json"
       to_version:
         description: "Target constraint version"
         required: false
         default: "v0.1.1"
+      required_stages:
+        description: "Comma-separated stage list"
+        required: false
+        default: "audit,sandbox,stress,scenario,backtest"
+      stage_policy_json:
+        description: "Optional stage policy JSON path"
+        required: false
+        default: ""
       dry_run:
         description: "Do not write artifacts"
         required: false
@@ -38,21 +46,32 @@ jobs:
       - name: Run evolution decision gate
         run: |
           CANDIDATE_PATH="${{ github.event.inputs.candidate_path || 'artifacts/evolution/feedback/candidate_positive_20260511.json' }}"
-          REPORT_PATHS="${{ github.event.inputs.report_paths || 'artifacts/evolution/audit/audit_positive_20260511.json,artifacts/evolution/sandbox/sandbox_positive_20260511.json' }}"
+          REPORT_PATHS="${{ github.event.inputs.report_paths || 'artifacts/evolution/audit/audit_positive_20260511.json,artifacts/evolution/sandbox/sandbox_positive_20260511.json,artifacts/evolution/stress/stress_positive_20260512.json,artifacts/evolution/scenario/scenario_positive_20260512.json,artifacts/evolution/backtest/backtest_positive_20260512.json' }}"
           TO_VERSION="${{ github.event.inputs.to_version || 'v0.1.1' }}"
+          REQUIRED_STAGES="${{ github.event.inputs.required_stages || 'audit,sandbox,stress,scenario,backtest' }}"
+          STAGE_POLICY_JSON="${{ github.event.inputs.stage_policy_json || '' }}"
           DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+
+          POLICY_ARGS=()
+          if [ -n "$STAGE_POLICY_JSON" ]; then
+            POLICY_ARGS=(--stage-policy-json "$STAGE_POLICY_JSON")
+          fi
 
           if [ "$DRY_RUN" = "true" ]; then
             python scripts/ci/evolution_decision_gate.py \
               --candidate "$CANDIDATE_PATH" \
               --reports "$REPORT_PATHS" \
+              --required-stages "$REQUIRED_STAGES" \
               --to-version "$TO_VERSION" \
+              "${POLICY_ARGS[@]}" \
               --dry-run
           else
             python scripts/ci/evolution_decision_gate.py \
               --candidate "$CANDIDATE_PATH" \
               --reports "$REPORT_PATHS" \
+              --required-stages "$REQUIRED_STAGES" \
               --to-version "$TO_VERSION" \
+              "${POLICY_ARGS[@]}" \
               --artifacts-dir artifacts/evolution/decision \
               --rollback-dir artifacts/evolution/rollback
           fi

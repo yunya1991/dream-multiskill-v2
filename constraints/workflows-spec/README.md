@@ -14,6 +14,8 @@
 - `evolution-p0-acceptance-report-2026-05-12.md`：P0 Day2 自动化验收报告（Decision Gate + rollback pointer）
 - `evolution-p0-decision-gate-spec-v0.1.md`：P0 Day2 Decision Gate 可执行规则与错误码映射
 - `evolution-p0-rollback-pointer-spec-v0.1.md`：P0 Day2 rollback pointer 数据契约与恢复约定
+- `evolution-p1-stage-policy-spec-v0.1.md`：P1 多门禁 `stage_policy` 独立判定策略规范
+- `evolution-p1-acceptance-report-2026-05-12.md`：P1 多门禁聚合验收报告（stress/scenario/backtest + stage_policy）
 - `communication-contract-v0.1.md`：三层通信调用与闭环升级契约
 - `memory.md`（2026-05-10 更新）：新增 L1~L4 显式入口映射与 `MemoryEngine` 调用对齐约定
 - `trading.md`（2026-05-10 更新）：新增 A0-A9 显式入口映射与三批技能迁移清单
