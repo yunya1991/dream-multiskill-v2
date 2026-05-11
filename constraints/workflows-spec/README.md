@@ -10,6 +10,7 @@
 - `evolution-p0-contracts-v0.1.md`：P0 三类契约定义（Candidate/ValidationReport/PromotionRecord）
 - `evolution-p0-state-machine-errors.md`：P0 状态机与错误码字典
 - `evolution-p0-acceptance-checklist.md`：P0 验收清单与 Go/No-Go 步骤
+- `evolution-p0-acceptance-report-2026-05-11.md`：P0 Day1 手工验收报告（正/反样本 + Go/No-Go）
 - `communication-contract-v0.1.md`：三层通信调用与闭环升级契约
 - `memory.md`（2026-05-10 更新）：新增 L1~L4 显式入口映射与 `MemoryEngine` 调用对齐约定
 - `trading.md`（2026-05-10 更新）：新增 A0-A9 显式入口映射与三批技能迁移清单
