@@ -50,16 +50,16 @@
   - 回放能力已落地：`workflows/trading-decision/orchestrator/replay.py`。
   - 三环系统编排已落地：`workflows/trading-decision/orchestrator/system_loop.py`。
   - 系统指标导出已落地：`system_loop` 输出 `success_rate/avg_duration_ms/retry_rate/failure_distribution` 并落盘 JSON。
-  - CI 已新增系统级闭环测试门禁：`safe-main-merge-gate.yml` 增加 trading system loop gate tests。
+  - 协议字段主链可追溯审计门禁已落地：`scripts/ci/trading_traceability_guard.py`，并接入 CI。
+  - 与记忆 L4 标准化 I/O 契约验收已落地：`workflows/trading-decision/orchestrator/memory_l4_contract_bridge.py` + `test_trading_memory_l4_contract_e2e.py`。
+  - CI 已新增系统级闭环测试门禁：`safe-main-merge-gate.yml` 增加 trading system loop、L4 contract 与 traceability guard。
   - 交易域回归测试通过：`29 passed`。
 - **部分实现 / 未实现**
   - `P2` 可视化指标看板（Dashboard UI）未落地（当前为 JSON 指标导出）。
-  - 协议字段“主链产物全量可追溯”仍需补充系统级审计脚本与门禁断言。
-  - 与记忆 L4 的标准化 I/O 契约尚未完成系统级验收。
 
 ### 4.3 判定
 
-- 当前状态为：**“系统级主链已贯通（P1 主体完成）”**，仍有 **“P2 增强项与 CI 门禁固化”** 待完成。
+- 当前状态为：**“系统级主链与协议门禁已贯通（P0/P1 + 关键 P2 收口完成）”**，剩余主要是 **“P2 可视化看板增强”**。
 
 ## 5. 技能清单（已迁移）
 
