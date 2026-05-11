@@ -16,6 +16,8 @@ P0 执行文档：
 - `constraints/workflows-spec/evolution-p0-contracts-v0.1.md`
 - `constraints/workflows-spec/evolution-p0-state-machine-errors.md`
 - `constraints/workflows-spec/evolution-p0-acceptance-checklist.md`
+- `constraints/workflows-spec/evolution-p0-decision-gate-spec-v0.1.md`
+- `constraints/workflows-spec/evolution-p0-rollback-pointer-spec-v0.1.md`
 
 闭环主链：
 
@@ -108,3 +110,4 @@ P0 执行文档：
 ## 6. 同步记录
 
 - `2026-05-11`：将“记忆驱动进化闭环（最小可行版）”正式纳入进化工作流工程部规范，并与 `constraints/workflows-spec/README.md` 建立索引同步。
+- `2026-05-12`：补充 Day2 可执行规范：`Decision Gate` 判定规则与 `rollback pointer` 契约，作为脚本自动化落地基线。
