@@ -1,19 +1,46 @@
-# SKILL 全量清单（用于迁移对齐）
+# SKILL 全量清单（用于复制完整性审计）
 
-- 生成时间：`2026-05-10T16:57:23Z`
-- 源基线：`dream-trading-automation@feature/add-skills`
-- 目标基线：`dream-multiskill-v2`（本地）
-- 外部参考：CodeBuddy 分享页显示总量 `88`（User 86 + Project 2），用于规模校验。
+- 审计时间：`2026-05-11`
+- 源基线：`dream-trading-automation@origin/feature/add-skills`
+- 目标基线：`dream-multiskill-v2@origin/main`（`skills/`）
+- 审计口径：按 `SKILL.md` 所在目录对比（`0-CORE` ~ `4-GENERIC`）
 
-## 1. 数量总览
+## 1. 审计结论
 
-- 源仓 `SKILL.md` 数量（排除 `.workbuddy`）：`47`
-- 目标仓 `SKILL.md` 数量：`3`
-- 迁移缺口（按文件数）：`44`
+- 系统所需基线技能总数：`47`
+- 已复制到目标 `skills/` 的基线技能：`47`
+- 未复制缺口：`0`
+- 目标仓额外治理技能（非源仓基线）：`3`
+- 复制完整率：`100%`
 
-## 2. 源仓分层清单（完整）
+额外治理技能如下（属于 `dream-multiskill-v2` 自有能力，不计为缺口）：
 
-### 0-CORE（8）
+- `skills/0-CORE/architecture-sync-guard/SKILL.md`
+- `skills/0-CORE/code-review-merge-assistant/SKILL.md`
+- `skills/0-CORE/safe-main-merge/SKILL.md`
+
+## 2. 按重要级状态
+
+### P0（交易主链与记忆闭环，必须）
+
+- `1-TRADE` A0-A9 对应技能：`已全部覆盖`
+- `0-CORE/memory-manager`：`已覆盖`
+- `2-INTELLIGENCE/dream-oneirology`、`dream-archive-center`、`dream-intelligence-analysis`：`已覆盖`
+
+### P1（运行保障与治理协同，应覆盖）
+
+- `0-CORE` 其余治理/知识技能：`已覆盖`
+- `3-SUPPORT` 全部支撑技能：`已覆盖`
+- `2-INTELLIGENCE` 其余分析技能：`已覆盖`
+
+### P2（通用与效率增强，可持续优化）
+
+- `4-GENERIC` 全部工具技能：`已覆盖`
+- `skills/4-GENERIC/skill-creator/skill-creator/SKILL.md` 与父目录并存：`保留，建议后续做目录规范化评审`
+
+## 3. 分层基线清单（47/47）
+
+### 0-CORE（8/8）
 
 - `0-CORE/artifact-alignment-manager/SKILL.md`
 - `0-CORE/dream-constitution/SKILL.md`
@@ -24,7 +51,7 @@
 - `0-CORE/learning-proposal-generator/SKILL.md`
 - `0-CORE/memory-manager/SKILL.md`
 
-### 1-TRADE（16）
+### 1-TRADE（16/16）
 
 - `1-TRADE/A7-practice-theory/SKILL.md`
 - `1-TRADE/A8-theory-practice-verification/SKILL.md`
@@ -43,7 +70,7 @@
 - `1-TRADE/dream-tactical-executor/SKILL.md`
 - `1-TRADE/dream-tactical-validator/SKILL.md`
 
-### 2-INTELLIGENCE（7）
+### 2-INTELLIGENCE（7/7）
 
 - `2-INTELLIGENCE/dream-archive-center/SKILL.md`
 - `2-INTELLIGENCE/dream-bailian-integration/SKILL.md`
@@ -53,7 +80,7 @@
 - `2-INTELLIGENCE/dream-oneirology/SKILL.md`
 - `2-INTELLIGENCE/master-seminar/SKILL.md`
 
-### 3-SUPPORT（9）
+### 3-SUPPORT（9/9）
 
 - `3-SUPPORT/ai-trading-compliance/SKILL.md`
 - `3-SUPPORT/auto-repair/SKILL.md`
@@ -65,7 +92,7 @@
 - `3-SUPPORT/dream-product-hub-maintenance/SKILL.md`
 - `3-SUPPORT/resource-efficiency-analyst/SKILL.md`
 
-### 4-GENERIC（7）
+### 4-GENERIC（7/7）
 
 - `4-GENERIC/find-skills/SKILL.md`
 - `4-GENERIC/github/SKILL.md`
@@ -74,28 +101,3 @@
 - `4-GENERIC/skill-creator/SKILL.md`
 - `4-GENERIC/skill-creator/skill-creator/SKILL.md`
 - `4-GENERIC/tavily/SKILL.md`
-
-## 3. 目标仓现状（本地专项检查）
-
-- `skills/0-CORE/architecture-sync-guard/SKILL.md`
-- `skills/0-CORE/code-review-merge-assistant/SKILL.md`
-- `skills/0-CORE/safe-main-merge/SKILL.md`
-
-## 4. A0-A9 关键技能迁移白名单（第一批）
-
-- `A0`: `1-TRADE/dream-contradiction-theory/SKILL.md`
-- `A1`: `1-TRADE/dream-strategy-research/SKILL.md`
-- `A2`: `1-TRADE/dream-first-principles/SKILL.md`
-- `A3`: `1-TRADE/dream-strategy-designer/SKILL.md`, `1-TRADE/dream-strategy-parser/SKILL.md`
-- `A4`: `1-TRADE/dream-tactical-validator/SKILL.md`, `1-TRADE/dream-pretrade-gatekeeper/SKILL.md`
-- `A5`: `1-TRADE/dream-tactical-executor/SKILL.md`
-- `A6`: `1-TRADE/dream-intelligence-monitor/SKILL.md`, `1-TRADE/dream-signal-scoring-spec/SKILL.md`, `1-TRADE/dream-regime-detector/SKILL.md`
-- `A7`: `1-TRADE/A7-practice-theory/SKILL.md`
-- `A8`: `1-TRADE/A8-theory-practice-verification/SKILL.md`
-- `A9`: `1-TRADE/dream-exit-skill-v2/SKILL.md`
-
-## 5. 迁移建议
-
-- 先迁移 `1-TRADE` 的 A0-A9 对应技能，再补齐 `0-CORE` 记忆/治理依赖技能。
-- 每个技能目录迁移时必须携带：`SKILL.md`、`scripts/`、`templates/`、`gates/`、`test_cases/`（如存在）。
-- 迁移完成后，在 `constraints/workflows-spec/` 同步更新链路与技能清单版本。
