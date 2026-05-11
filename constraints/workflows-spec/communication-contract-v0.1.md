@@ -158,3 +158,5 @@ evolution --审核发布--> constraints
 - `2026-05-11T08:50:00Z`：完成最终尾项收口：新增主链协议字段可追溯审计门禁 `scripts/ci/trading_traceability_guard.py`，新增 trading↔memory L4 标准 I/O 契约桥接 `orchestrator/memory_l4_contract_bridge.py` 与系统级验收测试，并接入 safe main merge gate。
 - `2026-05-11T08:00:00Z`：完成协议与记忆收尾：新增主链字段可追溯审计门禁 `scripts/ci/trading_traceability_guard.py`，新增 trading↔memory L4 标准 I/O 契约桥接 `orchestrator/memory_l4_contract_bridge.py` 与系统级验收测试，并接入 `safe-main-merge-gate.yml`。
 - `2026-05-11T09:00:00Z`：同步 `workflows/memory/memory_engine/consistency.py` 健康分计算策略更新（缺失级别改为 partial credit），该变更不引入字段或错误语义破坏，维持 `v0.1` 契约兼容。
+- `2026-05-11T10:30:00Z`：新增分支生命周期自动治理契约：`scripts/ci/branch_lifecycle_bot.py` 输出 `artifacts/branch_lifecycle/{scan,actions,summary}-<timestamp>.json` 三类审计事件，用于 PR/分支状态标记与低风险自动收敛追溯。
+- `2026-05-11T12:00:00Z`：完成 A0-A9 架构与 `trading-communication-protocol-v2.md` 规范对齐：执行环新增 A6 情报环节（A5→A6→A9）、A9→A7 治理触发消息；治理环新增 A0 矛盾监控入口（A0→A9→A7→A8→A2/A3）；状态机状态名称对齐规范；新增 30 个集成测试覆盖完整链路、重试逻辑、告警边界、协议合约校验。
