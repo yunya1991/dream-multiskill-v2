@@ -153,3 +153,4 @@ evolution --审核发布--> constraints
 - `2026-05-11T00:00:00Z`：将 `A0-A9-通信协议与三大闭环架构-v2` 全量沉淀至 `constraints/workflows-spec/trading-communication-protocol-v2.md`，并在 `trading.md` 增加“协议与三环实现一致性审计”。
 - `2026-05-11T04:40:00Z`：完成 P0 第一轮实现：新增统一协议模块 `workflows/trading-decision/protocol/message.py`、A6 五级路由能力、执行环编排器 `workflows/trading-decision/orchestrator/execution_loop.py` 及对应测试。
 - `2026-05-11T05:20:00Z`：完成 P0 收尾：A0-A9 全部入口统一 envelope 输出（`header + payload`），并新增 fail-closed 测试（缺 `trace_id`/契约字段即阻断）。
+- `2026-05-11T06:30:00Z`：完成 P1/P2 主体：新增治理环编排 `orchestrator/governance_loop.py`、三环系统编排 `orchestrator/system_loop.py`、传输适配 `transports/adapters.py`、状态机与重试处罚 `orchestrator/state_machine.py`、回放能力 `orchestrator/replay.py`，并补齐系统级测试。

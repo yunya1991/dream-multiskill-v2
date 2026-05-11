@@ -59,37 +59,37 @@
 
 ### P1-1 治理环编排器
 
-- [ ] 实现 `A7 -> A8 -> A2/A3` 调度
-- [ ] 实现 `A9 -> A7` 事件触发
-- [ ] 实现 A8 定时触发（每日 14:00）接口层（先可本地 cron 适配）
+- [x] 实现 `A7 -> A8 -> A2/A3` 调度
+- [x] 实现 `A9 -> A7` 事件触发
+- [x] 实现 A8 定时触发（每日 14:00）接口层（先可本地 cron 适配）
 
 ### P1-2 传输抽象层（HTTP + MQ）
 
-- [ ] 同步通道：HTTP 适配器（执行环、治理环）
-- [ ] 异步通道：MQ 适配器（情报环）
-- [ ] 提供本地 mock transport，保证单测不依赖外部中间件
+- [x] 同步通道：HTTP 适配器（执行环、治理环）
+- [x] 异步通道：MQ 适配器（情报环）
+- [x] 提供本地 mock transport，保证单测不依赖外部中间件
 
 ### P1-3 状态机与错误语义
 
-- [ ] 实现全局状态机（IDLE/SIGNAL/RESEARCH/.../VERIFICATION）
-- [ ] 统一错误码：
+- [x] 实现全局状态机（IDLE/SIGNAL/RESEARCH/.../VERIFICATION）
+- [x] 统一错误码：
   - `CONSTRAINT_VALIDATION_FAILED`
   - `MEMORY_REFERENCE_MISSING`
   - `EVIDENCE_INCOMPLETE`
   - `SANDBOX_REGRESSION`
-- [ ] 实现超时、重试、降级逻辑
+- [x] 实现超时、重试、降级逻辑
 
 ## 3. P2（增强）
 
 ### P2-1 处罚与信誉机制
 
-- [ ] 模块级评分、连续失败惩罚、恢复条件
+- [x] 模块级评分、连续失败惩罚、恢复条件
 - [ ] 与治理环审计结果联动
 
 ### P2-2 可观测性与回放
 
-- [ ] 按 `trace_id` 全链路日志索引
-- [ ] 增加链路回放工具（输入摘要、输出摘要、耗时、状态）
+- [x] 按 `trace_id` 全链路日志索引
+- [x] 增加链路回放工具（输入摘要、输出摘要、耗时、状态）
 - [ ] 增加指标看板（成功率、平均耗时、重试率、失败分布）
 
 ## 4. 测试清单
@@ -97,23 +97,23 @@
 - [x] 协议对象单测：字段完整性、类型校验、非法输入拒绝
 - [x] 执行环编排测试：正常流（A4/A5 回跳下一步补细化场景）
 - [x] 情报环路由测试：L0/L1/L1.5/L2/L3 全覆盖
-- [ ] 治理环测试：A9->A7->A8->A2/A3 回写闭环
-- [ ] 端到端集成测试：三环并行与冲突场景
+- [x] 治理环测试：A9->A7->A8->A2/A3 回写闭环
+- [x] 端到端集成测试：三环并行与冲突场景
 - [ ] 门禁测试：协议字段缺失即阻断
 
 ## 5. 交付物清单
 
 - [x] `workflows/trading-decision/protocol/*`
 - [x] `workflows/trading-decision/orchestrator/*`
-- [ ] `workflows/trading-decision/transports/*`
+- [x] `workflows/trading-decision/transports/*`
 - [x] `tests/test_trading_protocol_*.py`
 - [x] `tests/test_trading_orchestrator_*.py`
-- [ ] `constraints/workflows-spec/trading.md` 同步系统级状态
-- [ ] `constraints/workflows-spec/communication-contract-v0.1.md` 增补同步记录
+- [x] `constraints/workflows-spec/trading.md` 同步系统级状态
+- [x] `constraints/workflows-spec/communication-contract-v0.1.md` 增补同步记录
 
 ## 6. 完成验收标准
 
-- [ ] 三大闭环触发路径全部可执行且有自动化测试覆盖
+- [x] 三大闭环触发路径全部可执行且有自动化测试覆盖
 - [ ] 协议字段在主链产物中全量可追溯
 - [ ] 任一阶段失败可定位、可回放、可重试
 - [ ] 与记忆 L4 交互具备标准化输入输出契约
