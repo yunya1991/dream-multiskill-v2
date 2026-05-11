@@ -150,3 +150,4 @@ evolution --审核发布--> constraints
 - `2026-05-10T17:16:39Z`：完成交易链路第一批迁移（A0-A2），新增 `workflows/trading-decision/A0~A2` 入口封装，并同步迁移对应 `1-TRADE` 技能目录。
 - `2026-05-10T17:23:08Z`：完成交易链路第二批迁移（A3-A5），新增 `workflows/trading-decision/A3~A5` 入口封装，并同步迁移对应 `1-TRADE` 技能目录。
 - `2026-05-10T17:31:16Z`：完成交易链路第三批迁移（A6-A9），新增 `workflows/trading-decision/A6~A9` 入口封装，并同步迁移对应 `1-TRADE` 技能目录。
+- `2026-05-11T00:00:00Z`：将 `A0-A9-通信协议与三大闭环架构-v2` 全量沉淀至 `constraints/workflows-spec/trading-communication-protocol-v2.md`，并在 `trading.md` 增加“协议与三环实现一致性审计”。
