@@ -15,11 +15,16 @@ class TradingStateMachine:
     VALID = {
         "IDLE": {"SIGNAL"},
         "SIGNAL": {"RESEARCH"},
-        "RESEARCH": {"SIMULATION"},
-        "SIMULATION": {"VALIDATION"},
-        "VALIDATION": {"EXECUTION"},
-        "EXECUTION": {"GOVERNANCE", "IDLE"},
-        "GOVERNANCE": {"RESEARCH", "SIMULATION", "IDLE"},
+        "RESEARCH": {"ANALYZING"},
+        "ANALYZING": {"STRATEGIZING"},
+        "STRATEGIZING": {"VALIDATING"},
+        "VALIDATING": {"EXECUTING"},
+        "EXECUTING": {"MONITORING"},
+        "MONITORING": {"ALERT", "EXIT"},
+        "ALERT": {"EXIT"},
+        "EXIT": {"PRACTICE"},
+        "PRACTICE": {"VERIFICATION"},
+        "VERIFICATION": {"RESEARCH", "ANALYZING", "IDLE"},
     }
 
     def __init__(self) -> None:

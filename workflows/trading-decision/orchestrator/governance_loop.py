@@ -30,6 +30,7 @@ def _load_state_module():
 def _default_stage_runners() -> Dict[str, StageRunner]:
     root = Path(__file__).resolve().parents[1]
     mapping = {
+        "A0": ("A0_contradiction/entrypoint.py", "run_a0_contradiction_analysis"),
         "A9": ("A9_exit/entrypoint.py", "run_a9_exit"),
         "A7": ("A7_audit/entrypoint.py", "run_a7_audit"),
         "A8": ("A8_theory-practice/entrypoint.py", "run_a8_theory_practice"),
@@ -85,6 +86,17 @@ def run_governance_loop(
     messages = []
     visited_stages = []
     next_input = dict(payload)
+
+    # A0: 矛盾监控 — 治理环入口，发现/分析矛盾供后续阶段利用
+    contradictions = list(payload.get("contradictions") or [])
+    a0_input = {"trace_id": trace_id, "correlation_id": correlation_id, "contradictions": contradictions}
+    a0_out = proto.envelope_payload(runners["A0"](a0_input))
+    a0_out = proto.ensure_contract_fields(a0_out, producer="workflows/trading-decision/A0")
+    proto.require_contract_fields(a0_out)
+    stage_outputs["A0"] = a0_out
+    visited_stages.append("A0")
+    messages.append(_transition_message(proto, "A0", "A9", trace_id, correlation_id, a0_out))
+    next_input.update(a0_out)
 
     a9_out = proto.envelope_payload(runners["A9"](next_input, output_dir=output_dir))
     a9_out = proto.ensure_contract_fields(a9_out, producer="workflows/trading-decision/A9")

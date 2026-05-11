@@ -31,9 +31,9 @@ def test_governance_loop_runs_a9_a7_a8_and_routes_to_a2(tmp_path: Path):
     )
 
     assert out["trace_id"] == "trace-gov-1"
-    assert out["visited_stages"][:3] == ["A9", "A7", "A8"]
+    assert out["visited_stages"][:4] == ["A0", "A9", "A7", "A8"]
     assert out["visited_stages"][-1] == "A2"
-    assert {"A9", "A7", "A8", "A2"}.issubset(set(out["stage_outputs"].keys()))
+    assert {"A0", "A9", "A7", "A8", "A2"}.issubset(set(out["stage_outputs"].keys()))
     assert any(m["header"]["loop_type"] == "governance" for m in out["messages"])
 
 

@@ -29,6 +29,7 @@ def _default_stage_runners() -> Dict[str, StageRunner]:
         "A3": ("A3_simulation/entrypoint.py", "run_a3_simulation"),
         "A4": ("A4_validation/entrypoint.py", "run_a4_validation"),
         "A5": ("A5_execution/entrypoint.py", "run_a5_execution"),
+        "A6": ("A6_intelligence/entrypoint.py", "run_a6_intelligence"),
         "A9": ("A9_exit/entrypoint.py", "run_a9_exit"),
     }
     runners: Dict[str, StageRunner] = {}
@@ -58,7 +59,12 @@ def run_execution_loop(
     stage_runners: Optional[Dict[str, StageRunner]] = None,
     max_retries: int = 1,
 ) -> Dict[str, Any]:
-    """Run A1->A2->A3->A4->A5->A9 execution loop with fallback hops."""
+    """Run A1->A2->A3->A4->A5->A6->A9 execution loop with fallback hops.
+
+    Per spec:
+    - A5 execution result notifies A6 (intelligence monitoring)
+    - A9 exit triggers A7 (practice record) via governance transition message
+    """
     proto = _load_protocol_module()
     runners = stage_runners or _default_stage_runners()
     trace_id = str(payload.get("trace_id") or "trace-missing")
@@ -116,16 +122,55 @@ def run_execution_loop(
             stage_outputs["A5_retry"] = out
             next_input.update(out)
 
+    # A5 -> A6: 执行结果通知情报环监控 (spec: A5 -> A6 event trigger)
+    a6_input = {
+        "trace_id": trace_id,
+        "correlation_id": correlation_id,
+        "alerts": [
+            {
+                "source": "execution",
+                "severity": "info",
+                "risk_score": 0.0,
+                "regime_change": False,
+            }
+        ],
+        "signal_shift": 0.0,
+    }
+    a6_stage_out = runners["A6"](a6_input, output_dir=output_dir)
+    a6_out = proto.envelope_payload(a6_stage_out)
+    a6_out = proto.ensure_contract_fields(a6_out, producer="workflows/trading-decision/A6")
+    proto.require_contract_fields(a6_out)
+    stage_outputs["A6"] = a6_out
+    messages.append(
+        _transition_message(proto, "A5", "A6", trace_id, correlation_id, stage_outputs.get("A5", {}))
+    )
+
+    # A9 exit
     a9_stage_out = runners["A9"](next_input, output_dir=output_dir)
     a9_out = proto.envelope_payload(a9_stage_out)
     a9_out = proto.ensure_contract_fields(a9_out, producer="workflows/trading-decision/A9")
     proto.require_contract_fields(a9_out)
     stage_outputs["A9"] = a9_out
-    messages.append(_transition_message(proto, "A5", "A9", trace_id, correlation_id, stage_outputs.get("A5", {})))
+    messages.append(_transition_message(proto, "A6", "A9", trace_id, correlation_id, stage_outputs.get("A6", {})))
+
+    # A9 -> A7: 离场触发治理环实践记录 (spec: A9 -> A7 event trigger)
+    messages.append(
+        proto.build_envelope(
+            source="A9",
+            target="A7",
+            message_type="EVENT",
+            priority="MEDIUM",
+            loop_type="governance",
+            trace_id=trace_id,
+            correlation_id=correlation_id,
+            timeout_ms=300000,
+            payload=a9_out,
+        )
+    )
 
     return {
         "trace_id": trace_id,
-        "visited_stages": ["A1", "A2", "A3", "A4", "A5", "A9"],
+        "visited_stages": ["A1", "A2", "A3", "A4", "A5", "A6", "A9"],
         "stage_outputs": stage_outputs,
         "messages": messages,
     }
