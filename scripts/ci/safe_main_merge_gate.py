@@ -68,6 +68,27 @@ def check_rules(event: dict, changed_files: List[str]) -> Tuple[List[str], List[
             "Changes under constraints/ require updates in constraints/workflows-spec/ or constraints/system-index/."
         )
 
+    trading_runtime_changed = any(
+        path.startswith("workflows/trading-decision/orchestrator/")
+        or path.startswith("workflows/trading-decision/transports/")
+        for path in changed_files
+    )
+    trading_system_tests_changed = any(
+        path.startswith("tests/test_trading_")
+        and (
+            "system_loop" in path
+            or "governance_orchestrator" in path
+            or "state_machine" in path
+            or "transports" in path
+            or "replay" in path
+        )
+        for path in changed_files
+    )
+    if trading_runtime_changed and not trading_system_tests_changed:
+        violations.append(
+            "Trading runtime changes require system-level trading tests updates (test_trading_*)."
+        )
+
     if any(path == "main" for path in changed_files):
         violations.append("Invalid file change detected: main")
 

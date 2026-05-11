@@ -30,6 +30,11 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+
       - name: Collect changed files
         run: |
           git fetch origin main --depth=1
@@ -48,6 +53,13 @@ jobs:
           CHANGED_FILES_PATH: changed_files.txt
         run: |
           python scripts/ci/architecture_sync_guard.py
+
+      - name: Run trading system loop gate tests
+        run: |
+          pytest tests/test_trading_protocol_fail_closed_p0.py \
+            tests/test_trading_governance_orchestrator_p1.py \
+            tests/test_trading_system_loop_e2e_p1p2.py \
+            tests/test_trading_replay_observability_p2.py -q
 
       - name: Run review policy guard
         env:

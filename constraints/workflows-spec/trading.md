@@ -46,13 +46,16 @@
   - 治理环编排器已落地：`workflows/trading-decision/orchestrator/governance_loop.py`，支持 `A9 -> A7 -> A8 -> A2/A3` 与 `14:00` 触发接口。
   - 传输抽象层已落地：`workflows/trading-decision/transports/adapters.py`（HTTP/MQ/Mock）。
   - 状态机与重试降级已落地：`workflows/trading-decision/orchestrator/state_machine.py`。
+  - 治理审计与奖惩联动已落地：`governance_loop` 已接入 `apply_governance_feedback`。
   - 回放能力已落地：`workflows/trading-decision/orchestrator/replay.py`。
   - 三环系统编排已落地：`workflows/trading-decision/orchestrator/system_loop.py`。
+  - 系统指标导出已落地：`system_loop` 输出 `success_rate/avg_duration_ms/retry_rate/failure_distribution` 并落盘 JSON。
+  - CI 已新增系统级闭环测试门禁：`safe-main-merge-gate.yml` 增加 trading system loop gate tests。
   - 交易域回归测试通过：`29 passed`。
 - **部分实现 / 未实现**
-  - `P2` 指标看板（成功率、平均耗时、重试率、失败分布）未落地。
-  - 处罚与信誉机制尚未与治理审计结果做强联动闭环。
-  - CI 尚未新增“系统级闭环专用门禁”。
+  - `P2` 可视化指标看板（Dashboard UI）未落地（当前为 JSON 指标导出）。
+  - 协议字段“主链产物全量可追溯”仍需补充系统级审计脚本与门禁断言。
+  - 与记忆 L4 的标准化 I/O 契约尚未完成系统级验收。
 
 ### 4.3 判定
 
