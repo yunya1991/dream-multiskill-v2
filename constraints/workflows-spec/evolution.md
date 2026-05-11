@@ -10,6 +10,13 @@
 
 - `docs/superpowers/specs/2026-05-11-memory-evolution-constraint-closed-loop-design.md`
 
+P0 执行文档：
+
+- `constraints/workflows-spec/evolution-p0-scope-freeze-2026-05-11.md`
+- `constraints/workflows-spec/evolution-p0-contracts-v0.1.md`
+- `constraints/workflows-spec/evolution-p0-state-machine-errors.md`
+- `constraints/workflows-spec/evolution-p0-acceptance-checklist.md`
+
 闭环主链：
 
 - `memory -> evolution -> constraints`
