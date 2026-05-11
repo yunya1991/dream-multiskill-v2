@@ -30,15 +30,16 @@ def test_a6_routes_levels_to_expected_targets(tmp_path: Path):
         },
         output_dir=tmp_path,
     )
-    assert out["alert_count"] == 5
-    assert Path(out["artifact_path"]).exists()
-    assert out["route_summary"]["L0"] >= 1
-    assert out["route_summary"]["L1"] >= 1
-    assert out["route_summary"]["L1.5"] >= 1
-    assert out["route_summary"]["L2"] >= 1
-    assert out["route_summary"]["L3"] >= 1
+    payload = out["payload"]
+    assert out["header"]["source"] == "A6"
+    assert payload["alert_count"] == 5
+    assert Path(payload["artifact_path"]).exists()
+    assert payload["route_summary"]["L0"] >= 1
+    assert payload["route_summary"]["L1"] >= 1
+    assert payload["route_summary"]["L1.5"] >= 1
+    assert payload["route_summary"]["L2"] >= 1
+    assert payload["route_summary"]["L3"] >= 1
 
-    targets = {event["header"]["target"] for event in out["routed_events"]}
+    targets = {event["header"]["target"] for event in payload["routed_events"]}
     assert {"A9", "A4", "A2", "A1", "A3"}.issubset(targets)
-    assert all(event["header"]["loop_type"] == "intelligence" for event in out["routed_events"])
-
+    assert all(event["header"]["loop_type"] == "intelligence" for event in payload["routed_events"])

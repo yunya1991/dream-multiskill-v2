@@ -71,11 +71,13 @@ def run_execution_loop(
     next_input = dict(payload)
 
     for idx, stage in enumerate(stage_order):
-        out = runners[stage](next_input, output_dir=output_dir)
+        stage_out = runners[stage](next_input, output_dir=output_dir)
+        out = proto.envelope_payload(stage_out)
         out = proto.ensure_contract_fields(
             out,
             producer=f"workflows/trading-decision/{stage}",
         )
+        proto.require_contract_fields(out)
         stage_outputs[stage] = out
         next_input.update(out)
 
@@ -86,28 +88,38 @@ def run_execution_loop(
 
         if stage == "A4" and out.get("risk_gate") != "PASS" and retry_count < max_retries:
             retry_count += 1
-            a3_out = runners["A3"](next_input, output_dir=output_dir)
+            a3_stage_out = runners["A3"](next_input, output_dir=output_dir)
+            a3_out = proto.envelope_payload(a3_stage_out)
             a3_out = proto.ensure_contract_fields(a3_out, producer="workflows/trading-decision/A3")
+            proto.require_contract_fields(a3_out)
             stage_outputs["A3_retry"] = a3_out
             next_input.update(a3_out)
-            out = runners["A4"](next_input, output_dir=output_dir)
+            a4_stage_out = runners["A4"](next_input, output_dir=output_dir)
+            out = proto.envelope_payload(a4_stage_out)
             out = proto.ensure_contract_fields(out, producer="workflows/trading-decision/A4")
+            proto.require_contract_fields(out)
             stage_outputs["A4_retry"] = out
             next_input.update(out)
 
         if stage == "A5" and out.get("execution_status") == "FAIL" and retry_count < max_retries:
             retry_count += 1
-            a4_out = runners["A4"](next_input, output_dir=output_dir)
+            a4_stage_out = runners["A4"](next_input, output_dir=output_dir)
+            a4_out = proto.envelope_payload(a4_stage_out)
             a4_out = proto.ensure_contract_fields(a4_out, producer="workflows/trading-decision/A4")
+            proto.require_contract_fields(a4_out)
             stage_outputs["A4_recheck"] = a4_out
             next_input.update(a4_out)
-            out = runners["A5"](next_input, output_dir=output_dir)
+            a5_stage_out = runners["A5"](next_input, output_dir=output_dir)
+            out = proto.envelope_payload(a5_stage_out)
             out = proto.ensure_contract_fields(out, producer="workflows/trading-decision/A5")
+            proto.require_contract_fields(out)
             stage_outputs["A5_retry"] = out
             next_input.update(out)
 
-    a9_out = runners["A9"](next_input, output_dir=output_dir)
+    a9_stage_out = runners["A9"](next_input, output_dir=output_dir)
+    a9_out = proto.envelope_payload(a9_stage_out)
     a9_out = proto.ensure_contract_fields(a9_out, producer="workflows/trading-decision/A9")
+    proto.require_contract_fields(a9_out)
     stage_outputs["A9"] = a9_out
     messages.append(_transition_message(proto, "A5", "A9", trace_id, correlation_id, stage_outputs.get("A5", {})))
 
@@ -117,4 +129,3 @@ def run_execution_loop(
         "stage_outputs": stage_outputs,
         "messages": messages,
     }
-

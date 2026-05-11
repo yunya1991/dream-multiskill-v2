@@ -87,3 +87,24 @@ def ensure_contract_fields(
     data.setdefault("timestamp", _utc_iso())
     return data
 
+
+def require_contract_fields(payload: Dict[str, Any]) -> Dict[str, Any]:
+    required = [
+        "stage_id",
+        "trace_id",
+        "constraint_version",
+        "memory_refs",
+        "evidence_refs",
+        "producer",
+        "schema_version",
+    ]
+    missing = [k for k in required if k not in payload or payload[k] in (None, "")]
+    if missing:
+        raise ValueError(f"missing required contract fields: {', '.join(missing)}")
+    return payload
+
+
+def envelope_payload(data: Dict[str, Any]) -> Dict[str, Any]:
+    if "payload" in data and isinstance(data["payload"], dict):
+        return data["payload"]
+    return data

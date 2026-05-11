@@ -14,6 +14,10 @@ def _load_module(rel_path: str):
     return module
 
 
+def _payload(out):
+    return out["payload"]
+
+
 def test_a6_entrypoint_outputs_intelligence_summary(tmp_path: Path):
     mod = _load_module("workflows/trading-decision/A6_intelligence/entrypoint.py")
     out = mod.run_a6_intelligence(
@@ -24,9 +28,11 @@ def test_a6_entrypoint_outputs_intelligence_summary(tmp_path: Path):
         },
         output_dir=tmp_path,
     )
-    assert out["stage_id"] == "A6"
-    assert out["alert_count"] == 1
-    assert Path(out["artifact_path"]).exists()
+    assert out["header"]["source"] == "A6"
+    payload = _payload(out)
+    assert payload["stage_id"] == "A6"
+    assert payload["alert_count"] == 1
+    assert Path(payload["artifact_path"]).exists()
 
 
 def test_a7_entrypoint_outputs_audit_report(tmp_path: Path):
@@ -39,9 +45,12 @@ def test_a7_entrypoint_outputs_audit_report(tmp_path: Path):
         },
         output_dir=tmp_path,
     )
-    assert out["stage_id"] == "A7"
-    assert out["audit_status"] in {"PASS", "REVIEW"}
-    assert Path(out["artifact_path"]).exists()
+    assert out["header"]["source"] == "A7"
+    assert out["header"]["target"] == "A8"
+    payload = _payload(out)
+    assert payload["stage_id"] == "A7"
+    assert payload["audit_status"] in {"PASS", "REVIEW"}
+    assert Path(payload["artifact_path"]).exists()
 
 
 def test_a8_entrypoint_outputs_theory_practice_verification(tmp_path: Path):
@@ -54,9 +63,11 @@ def test_a8_entrypoint_outputs_theory_practice_verification(tmp_path: Path):
         },
         output_dir=tmp_path,
     )
-    assert out["stage_id"] == "A8"
-    assert out["gap_score"] >= 0
-    assert Path(out["artifact_path"]).exists()
+    assert out["header"]["source"] == "A8"
+    payload = _payload(out)
+    assert payload["stage_id"] == "A8"
+    assert payload["gap_score"] >= 0
+    assert Path(payload["artifact_path"]).exists()
 
 
 def test_a9_entrypoint_outputs_exit_plan(tmp_path: Path):
@@ -69,9 +80,12 @@ def test_a9_entrypoint_outputs_exit_plan(tmp_path: Path):
         },
         output_dir=tmp_path,
     )
-    assert out["stage_id"] == "A9"
-    assert out["exit_action"] in {"TAKE_PROFIT", "STOP_LOSS", "HOLD"}
-    assert Path(out["artifact_path"]).exists()
+    assert out["header"]["source"] == "A9"
+    assert out["header"]["target"] == "A7"
+    payload = _payload(out)
+    assert payload["stage_id"] == "A9"
+    assert payload["exit_action"] in {"TAKE_PROFIT", "STOP_LOSS", "HOLD"}
+    assert Path(payload["artifact_path"]).exists()
 
 
 def test_phase3_trade_skills_exist():
