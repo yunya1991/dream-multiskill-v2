@@ -16,6 +16,8 @@
 - `evolution-p0-rollback-pointer-spec-v0.1.md`：P0 Day2 rollback pointer 数据契约与恢复约定
 - `evolution-p1-stage-policy-spec-v0.1.md`：P1 多门禁 `stage_policy` 独立判定策略规范
 - `evolution-p1-acceptance-report-2026-05-12.md`：P1 多门禁聚合验收报告（stress/scenario/backtest + stage_policy）
+- `evolution-p1-5-policy-template-versioning-spec-v0.1.md`：P1.5 `policy_version` 模板库与版本化规范
+- `evolution-p1-5-regression-matrix-report-2026-05-12.md`：P1.5 回归矩阵执行报告
 - `communication-contract-v0.1.md`：三层通信调用与闭环升级契约
 - `trading-communication-protocol-v2.md`：A0-A9 通信协议与定时驱动架构（v2.1，2026-05-12 更新：A0 集成化 + 治理环重构 + 定时调度）
 - `memory.md`（2026-05-10 更新）：新增 L1~L4 显式入口映射与 `MemoryEngine` 调用对齐约定

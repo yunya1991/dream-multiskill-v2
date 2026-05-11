@@ -337,3 +337,126 @@ def test_decision_gate_default_required_stages_include_stress_scenario_backtest(
     payload = json.loads((tmp_path / "decision" / "decision-20260512T101000Z.json").read_text(encoding="utf-8"))
     assert payload["required_stages"] == ["audit", "sandbox", "stress", "scenario", "backtest"]
     assert "REPORT_STAGE_MISSING" in payload["reason_codes"]
+
+
+def test_decision_gate_uses_policy_version_from_template_library(tmp_path):
+    mod = _load_module("scripts/ci/evolution_decision_gate.py")
+    candidate = {
+        "candidate_id": "cand-007",
+        "trace_id": "trace-007",
+        "constraint_version_base": "v0.1",
+        "evidence_refs": ["artifacts/evolution/feedback/evidence_pack_007.json"],
+        "schema_version": "evolution-p0-candidate-v0.1",
+    }
+    reports = [
+        {"candidate_id": "cand-007", "stage": "audit", "pass": True, "violations": []},
+        {"candidate_id": "cand-007", "stage": "sandbox", "pass": True, "violations": []},
+        {"candidate_id": "cand-007", "stage": "stress", "pass": True, "violations": []},
+        {"candidate_id": "cand-007", "stage": "scenario", "pass": True, "violations": []},
+        {"candidate_id": "cand-007", "stage": "backtest", "pass": True, "violations": []},
+    ]
+    candidate_path = tmp_path / "candidate.json"
+    _write_json(candidate_path, candidate)
+    report_paths = []
+    for i, payload in enumerate(reports):
+        path = tmp_path / f"r{i}.json"
+        _write_json(path, payload)
+        report_paths.append(path)
+
+    policy_library_dir = tmp_path / "policies"
+    _write_json(
+        policy_library_dir / "p1.relaxed-scenario.v1.json",
+        {
+            "policy_version": "p1.relaxed-scenario.v1",
+            "stage_policy": {
+                "scenario": {
+                    "allow_warnings": True,
+                    "max_violation_count": 1,
+                    "severity_blocklist": ["high", "critical"],
+                }
+            },
+        },
+    )
+
+    rc = mod.main(
+        [
+            "--candidate",
+            str(candidate_path),
+            "--reports",
+            ",".join(str(path) for path in report_paths),
+            "--policy-version",
+            "p1.relaxed-scenario.v1",
+            "--policy-library-dir",
+            str(policy_library_dir),
+            "--to-version",
+            "v0.1.2",
+            "--artifacts-dir",
+            str(tmp_path / "decision"),
+            "--rollback-dir",
+            str(tmp_path / "rollback"),
+            "--timestamp",
+            "2026-05-12T10:20:00Z",
+        ]
+    )
+    assert rc == 0
+    payload = json.loads((tmp_path / "decision" / "decision-20260512T102000Z.json").read_text(encoding="utf-8"))
+    assert payload["policy_version"] == "p1.relaxed-scenario.v1"
+    assert payload["policy_source"].endswith("p1.relaxed-scenario.v1.json")
+
+
+def test_decision_gate_rejects_when_policy_version_mismatch(tmp_path):
+    mod = _load_module("scripts/ci/evolution_decision_gate.py")
+    candidate = {
+        "candidate_id": "cand-008",
+        "trace_id": "trace-008",
+        "constraint_version_base": "v0.1",
+        "evidence_refs": ["artifacts/evolution/feedback/evidence_pack_008.json"],
+        "schema_version": "evolution-p0-candidate-v0.1",
+    }
+    reports = [
+        {"candidate_id": "cand-008", "stage": "audit", "pass": True, "violations": []},
+        {"candidate_id": "cand-008", "stage": "sandbox", "pass": True, "violations": []},
+        {"candidate_id": "cand-008", "stage": "stress", "pass": True, "violations": []},
+        {"candidate_id": "cand-008", "stage": "scenario", "pass": True, "violations": []},
+        {"candidate_id": "cand-008", "stage": "backtest", "pass": True, "violations": []},
+    ]
+    candidate_path = tmp_path / "candidate.json"
+    _write_json(candidate_path, candidate)
+    report_paths = []
+    for i, payload in enumerate(reports):
+        path = tmp_path / f"r{i}.json"
+        _write_json(path, payload)
+        report_paths.append(path)
+
+    policy_path = tmp_path / "stage_policy.json"
+    _write_json(
+        policy_path,
+        {
+            "policy_version": "p1.default.v1",
+            "stage_policy": {},
+        },
+    )
+    try:
+        mod.main(
+            [
+                "--candidate",
+                str(candidate_path),
+                "--reports",
+                ",".join(str(path) for path in report_paths),
+                "--stage-policy-json",
+                str(policy_path),
+                "--policy-version",
+                "p1.relaxed-scenario.v1",
+                "--to-version",
+                "v0.1.2",
+                "--artifacts-dir",
+                str(tmp_path / "decision"),
+                "--rollback-dir",
+                str(tmp_path / "rollback"),
+                "--timestamp",
+                "2026-05-12T10:25:00Z",
+            ]
+        )
+        assert False, "expected ValueError for policy version mismatch"
+    except ValueError as exc:
+        assert "policy_version mismatch" in str(exc)

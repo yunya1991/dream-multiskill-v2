@@ -63,7 +63,8 @@ jobs:
             tests/test_trading_memory_l4_contract_e2e.py \
             tests/test_ci_trading_traceability_guard.py \
             tests/test_ci_branch_lifecycle_bot.py \
-            tests/test_ci_evolution_decision_gate.py -q
+            tests/test_ci_evolution_decision_gate.py \
+            tests/test_ci_evolution_policy_regression_matrix.py -q
 
       - name: Generate trading artifacts for traceability audit
         run: |

@@ -23,6 +23,22 @@ on:
         description: "Optional stage policy JSON path"
         required: false
         default: ""
+      policy_version:
+        description: "Policy template version (uses policy library)"
+        required: false
+        default: ""
+      policy_library_dir:
+        description: "Policy library directory"
+        required: false
+        default: "artifacts/evolution/policy/templates"
+      run_regression_matrix:
+        description: "Run policy regression matrix"
+        required: false
+        default: "false"
+      regression_matrix_json:
+        description: "Regression matrix JSON path"
+        required: false
+        default: "artifacts/evolution/policy/regression-matrix-p1-5-v1.json"
       dry_run:
         description: "Do not write artifacts"
         required: false
@@ -50,11 +66,17 @@ jobs:
           TO_VERSION="${{ github.event.inputs.to_version || 'v0.1.1' }}"
           REQUIRED_STAGES="${{ github.event.inputs.required_stages || 'audit,sandbox,stress,scenario,backtest' }}"
           STAGE_POLICY_JSON="${{ github.event.inputs.stage_policy_json || '' }}"
+          POLICY_VERSION="${{ github.event.inputs.policy_version || '' }}"
+          POLICY_LIBRARY_DIR="${{ github.event.inputs.policy_library_dir || 'artifacts/evolution/policy/templates' }}"
           DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
 
           POLICY_ARGS=()
+          if [ -n "$POLICY_VERSION" ]; then
+            POLICY_ARGS+=(--policy-version "$POLICY_VERSION")
+            POLICY_ARGS+=(--policy-library-dir "$POLICY_LIBRARY_DIR")
+          fi
           if [ -n "$STAGE_POLICY_JSON" ]; then
-            POLICY_ARGS=(--stage-policy-json "$STAGE_POLICY_JSON")
+            POLICY_ARGS+=(--stage-policy-json "$STAGE_POLICY_JSON")
           fi
 
           if [ "$DRY_RUN" = "true" ]; then
@@ -76,6 +98,14 @@ jobs:
               --rollback-dir artifacts/evolution/rollback
           fi
 
+      - name: Run policy regression matrix
+        if: ${{ github.event.inputs.run_regression_matrix == 'true' }}
+        run: |
+          MATRIX_JSON="${{ github.event.inputs.regression_matrix_json || 'artifacts/evolution/policy/regression-matrix-p1-5-v1.json' }}"
+          python scripts/ci/evolution_policy_regression_matrix.py \
+            --matrix-json "$MATRIX_JSON" \
+            --output-json artifacts/evolution/policy/regression-matrix-summary-${{ github.run_id }}.json
+
       - name: Upload decision artifacts
         if: ${{ github.event.inputs.dry_run != 'true' }}
         uses: actions/upload-artifact@v4
@@ -84,4 +114,5 @@ jobs:
           path: |
             artifacts/evolution/decision/*.json
             artifacts/evolution/rollback/*.json
+            artifacts/evolution/policy/regression-matrix-summary-${{ github.run_id }}.json
           if-no-files-found: error

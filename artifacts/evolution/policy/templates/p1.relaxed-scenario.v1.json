@@ -6,12 +6,6 @@
       "allow_warnings": true,
       "max_violation_count": 1,
       "severity_blocklist": ["high", "critical"]
-    },
-    "backtest": {
-      "require_pass": true,
-      "allow_warnings": false,
-      "max_violation_count": 0,
-      "severity_blocklist": ["high", "critical"]
     }
   }
 }
