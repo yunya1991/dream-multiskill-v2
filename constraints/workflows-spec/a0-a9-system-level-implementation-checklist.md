@@ -10,9 +10,9 @@
 
 ### P0-1 统一消息协议对象
 
-- [ ] 新建统一协议模块（建议：`workflows/trading-decision/protocol/`）
-- [ ] 实现 `MessageHeader` 与 `Envelope` 结构（含字段校验）
-- [ ] 落地字段：
+- [x] 新建统一协议模块：`workflows/trading-decision/protocol/message.py`
+- [x] 实现 `MessageHeader` 与 `Envelope` 结构（含字段校验）
+- [x] 落地字段：
   - `message_id`
   - `timestamp`
   - `version`
@@ -24,11 +24,11 @@
   - `trace_id`
   - `loop_type`
   - `timeout_ms`
-- [ ] 各阶段入口输出统一封装为 `{"header": ..., "payload": ...}`
+- [ ] 各阶段入口输出统一封装为 `{"header": ..., "payload": ...}`（当前 A6 与 orchestrator 已接入）
 
 ### P0-2 统一必填契约字段
 
-- [ ] 为 A0-A9 阶段结果补齐：
+- [x] 为 A0-A9 阶段结果补齐（当前通过 orchestrator 统一补齐，A6 原生补齐）：
   - `constraint_version`
   - `memory_refs[]`
   - `evidence_refs[]`
@@ -38,22 +38,22 @@
 
 ### P0-3 A6 五级路由引擎
 
-- [ ] 在 A6 增加分级评估器：`L0/L1/L1.5/L2/L3`
-- [ ] 实现路由矩阵：
+- [x] 在 A6 增加分级评估器：`L0/L1/L1.5/L2/L3`
+- [x] 实现路由矩阵：
   - `L0 -> A9`
   - `L1 -> A4`
   - `L1.5 -> A2`
   - `L2 -> observe/log`
   - `L3 -> A1 + A3`
-- [ ] 输出标准化情报事件（`type=EVENT/REQUEST`, `loop_type=intelligence`）
+- [x] 输出标准化情报事件（`type=EVENT/REQUEST`, `loop_type=intelligence`）
 
 ### P0-4 执行环基础编排器
 
-- [ ] 实现 `A1 -> A2 -> A3 -> A4 -> A5 -> A9` 串行调度器
-- [ ] 支持失败回跳：
+- [x] 实现 `A1 -> A2 -> A3 -> A4 -> A5 -> A9` 串行调度器
+- [x] 支持失败回跳：
   - `A4 fail -> A3`
   - `A5 fail -> A4`
-- [ ] 串联统一 `trace_id` 并生成全链路摘要
+- [x] 串联统一 `trace_id` 并生成全链路摘要
 
 ## 2. P1（应完成）
 
@@ -94,9 +94,9 @@
 
 ## 4. 测试清单
 
-- [ ] 协议对象单测：字段完整性、类型校验、非法输入拒绝
-- [ ] 执行环编排测试：正常流、A4 回跳、A5 回跳
-- [ ] 情报环路由测试：L0/L1/L1.5/L2/L3 全覆盖
+- [x] 协议对象单测：字段完整性、类型校验、非法输入拒绝
+- [x] 执行环编排测试：正常流（A4/A5 回跳下一步补细化场景）
+- [x] 情报环路由测试：L0/L1/L1.5/L2/L3 全覆盖
 - [ ] 治理环测试：A9->A7->A8->A2/A3 回写闭环
 - [ ] 端到端集成测试：三环并行与冲突场景
 - [ ] 门禁测试：协议字段缺失即阻断
