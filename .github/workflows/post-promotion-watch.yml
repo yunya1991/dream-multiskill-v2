@@ -1,0 +1,48 @@
+name: Post Promotion Watch
+
+on:
+  workflow_dispatch:
+    inputs:
+      period:
+        description: "Governance report period"
+        required: false
+        default: "week"
+
+permissions:
+  contents: read
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build version compare dashboard
+        run: |
+          python scripts/ci/evolution_version_compare_dashboard.py \
+            --decision-dir artifacts/evolution/decision \
+            --rollback-dir artifacts/evolution/rollback \
+            --output-json artifacts/evolution/dashboard/version-compare-${{ github.run_id }}.json
+
+      - name: Build governance report
+        run: |
+          python scripts/ci/evolution_governance_report.py \
+            --period "${{ github.event.inputs.period || 'week' }}" \
+            --decision-glob "artifacts/evolution/**/decision-*.json" \
+            --rollback-exec-glob "artifacts/evolution/rollback/executions/*.json" \
+            --output-json artifacts/evolution/reports/${{ github.event.inputs.period || 'week' }}/governance-report-${{ github.run_id }}.json
+
+      - name: Upload watch artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-promotion-watch-${{ github.run_id }}
+          path: |
+            artifacts/evolution/dashboard/*.json
+            artifacts/evolution/reports/**/*.json
+          if-no-files-found: error

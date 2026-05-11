@@ -41,6 +41,16 @@
   - 手动触发 rollback pointer 执行
 - `evolution-governance-report.yml`
   - 定时 + 手动触发周/月报表
+- `memory-candidate-ingest.yml`
+  - 候选契约校验与 ingest artifact
+- `evolution-validation-gate.yml`
+  - 独立验证门禁执行入口
+- `constraint-promotion.yml`
+  - release snapshot 产物入口
+- `post-promotion-watch.yml`
+  - 发布后看板与治理报表聚合
+- `evolution-default-smoke.yml`
+  - 默认绿路 smoke 校验
 
 ## 4. 核心指标
 
@@ -61,3 +71,8 @@
 - `constraint_rollback.py` 在 `apply` 模式未显式 `--allow-apply` 时必须失败。
 - `restore_ref` 缺失或不存在时必须失败。
 - 任一失败必须写出 `reason_codes` 并返回非 0。
+
+## 6. Release Baseline
+
+- `constraints/releases/*.json` 作为 rollback `restore_ref` 的基础快照。
+- 新增 `scripts/ci/constraint_release_snapshot.py` 用于生成新版本 release snapshot。

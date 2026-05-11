@@ -68,6 +68,7 @@ jobs:
             tests/test_ci_evolution_candidate_priority_score.py \
             tests/test_ci_evolution_version_compare_dashboard.py \
             tests/test_ci_constraint_rollback.py \
+            tests/test_ci_constraint_release_snapshot.py \
             tests/test_ci_evolution_governance_report.py -q
 
       - name: Generate trading artifacts for traceability audit

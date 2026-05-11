@@ -29,8 +29,14 @@ jobs:
       - name: Build governance report
         run: |
           PERIOD_INPUT="${{ github.event.inputs.period || '' }}"
+          EVENT_NAME="${{ github.event_name }}"
+          CRON_VALUE="${{ github.event.schedule || '' }}"
           if [ -z "$PERIOD_INPUT" ]; then
-            PERIOD_INPUT="week"
+            if [ "$EVENT_NAME" = "schedule" ] && [ "$CRON_VALUE" = "35 3 1 * *" ]; then
+              PERIOD_INPUT="month"
+            else
+              PERIOD_INPUT="week"
+            fi
           fi
           python scripts/ci/evolution_governance_report.py \
             --period "$PERIOD_INPUT" \

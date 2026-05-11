@@ -76,6 +76,7 @@ P0 执行文档：
 - `constraint-promotion.yml`
 - `post-promotion-watch.yml`
 - `constraint-rollback.yml`
+- `evolution-default-smoke.yml`
 
 建议 artifacts 目录：
 
@@ -122,3 +123,4 @@ P0 执行文档：
 - `2026-05-12`：进入 P1.5，新增 `policy_version` 模板库机制与回归矩阵执行器。
 - `2026-05-12`：进入 P2 审批流绑定，新增 approval ticket fail-closed 门禁与审计产物规范。
 - `2026-05-12`：补全 P2 运营自动化（评分、版本看板、自动回滚执行器、周/月治理报表）并接入 workflow。
+- `2026-05-12`：完成 P2 缺口收口：周/月报调度路由修复、release snapshot 基线、推荐 workflow 拆分落地、默认绿路 smoke 校验。
