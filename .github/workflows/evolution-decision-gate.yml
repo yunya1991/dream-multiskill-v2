@@ -1,0 +1,68 @@
+name: Evolution Decision Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_path:
+        description: "Candidate JSON path"
+        required: false
+        default: "artifacts/evolution/feedback/candidate_positive_20260511.json"
+      report_paths:
+        description: "Comma-separated ValidationReport JSON paths"
+        required: false
+        default: "artifacts/evolution/audit/audit_positive_20260511.json,artifacts/evolution/sandbox/sandbox_positive_20260511.json"
+      to_version:
+        description: "Target constraint version"
+        required: false
+        default: "v0.1.1"
+      dry_run:
+        description: "Do not write artifacts"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+
+jobs:
+  decision-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run evolution decision gate
+        run: |
+          CANDIDATE_PATH="${{ github.event.inputs.candidate_path || 'artifacts/evolution/feedback/candidate_positive_20260511.json' }}"
+          REPORT_PATHS="${{ github.event.inputs.report_paths || 'artifacts/evolution/audit/audit_positive_20260511.json,artifacts/evolution/sandbox/sandbox_positive_20260511.json' }}"
+          TO_VERSION="${{ github.event.inputs.to_version || 'v0.1.1' }}"
+          DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            python scripts/ci/evolution_decision_gate.py \
+              --candidate "$CANDIDATE_PATH" \
+              --reports "$REPORT_PATHS" \
+              --to-version "$TO_VERSION" \
+              --dry-run
+          else
+            python scripts/ci/evolution_decision_gate.py \
+              --candidate "$CANDIDATE_PATH" \
+              --reports "$REPORT_PATHS" \
+              --to-version "$TO_VERSION" \
+              --artifacts-dir artifacts/evolution/decision \
+              --rollback-dir artifacts/evolution/rollback
+          fi
+
+      - name: Upload decision artifacts
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: evolution-decision-gate-${{ github.run_id }}
+          path: |
+            artifacts/evolution/decision/*.json
+            artifacts/evolution/rollback/*.json
+          if-no-files-found: error

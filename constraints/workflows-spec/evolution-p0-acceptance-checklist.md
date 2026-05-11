@@ -20,3 +20,4 @@
 ## Latest Run
 
 - `2026-05-11`：已完成 Day1 手工验收，报告见 `constraints/workflows-spec/evolution-p0-acceptance-report-2026-05-11.md`。
+- `2026-05-12`：已完成 Day2 自动化验收，报告见 `constraints/workflows-spec/evolution-p0-acceptance-report-2026-05-12.md`。

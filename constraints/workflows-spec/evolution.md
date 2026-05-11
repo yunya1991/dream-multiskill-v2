@@ -111,3 +111,4 @@ P0 执行文档：
 
 - `2026-05-11`：将“记忆驱动进化闭环（最小可行版）”正式纳入进化工作流工程部规范，并与 `constraints/workflows-spec/README.md` 建立索引同步。
 - `2026-05-12`：补充 Day2 可执行规范：`Decision Gate` 判定规则与 `rollback pointer` 契约，作为脚本自动化落地基线。
+- `2026-05-12`：新增 `evolution-decision-gate` 工作流入口与 Day2 自动化验收报告，完成 P0 Decision Gate 流程化闭环。
