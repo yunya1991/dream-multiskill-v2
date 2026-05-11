@@ -91,11 +91,54 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--to-version", required=True, help="Target constraint version")
     parser.add_argument("--required-stages", default="audit,sandbox,stress,scenario,backtest")
     parser.add_argument("--stage-policy-json", default="", help="Path to stage policy JSON")
+    parser.add_argument("--policy-version", default="", help="Stage policy version identifier")
+    parser.add_argument(
+        "--policy-library-dir",
+        default="artifacts/evolution/policy/templates",
+        help="Policy template directory used with --policy-version",
+    )
     parser.add_argument("--artifacts-dir", default="artifacts/evolution/decision")
     parser.add_argument("--rollback-dir", default="artifacts/evolution/rollback")
     parser.add_argument("--timestamp", default="")
     parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args(argv)
+
+
+def resolve_stage_policy(
+    *,
+    stage_policy_json: str,
+    policy_version: str,
+    policy_library_dir: str,
+) -> Dict[str, Any]:
+    source = ""
+    payload: Dict[str, Any] = {}
+    requested_version = str(policy_version or "").strip()
+    if stage_policy_json:
+        source = str(Path(stage_policy_json))
+        payload = _load_json(Path(stage_policy_json))
+    elif requested_version:
+        source_path = Path(policy_library_dir) / f"{requested_version}.json"
+        source = str(source_path)
+        payload = _load_json(source_path)
+
+    if payload and not isinstance(payload, dict):
+        raise ValueError("stage policy payload must be a JSON object")
+
+    if "stage_policy" in payload and isinstance(payload.get("stage_policy"), dict):
+        policy_by_stage = dict(payload.get("stage_policy") or {})
+    else:
+        policy_by_stage = {k: v for k, v in payload.items() if isinstance(v, dict)}
+
+    file_version = str(payload.get("policy_version") or "").strip()
+    if requested_version and file_version and requested_version != file_version:
+        raise ValueError(f"policy_version mismatch: requested={requested_version}, file={file_version}")
+
+    resolved_version = requested_version or file_version or "embedded.v0"
+    return {
+        "policy_version": resolved_version,
+        "policy_source": source or "default",
+        "policy_by_stage": policy_by_stage,
+    }
 
 
 def validate_candidate(candidate: Dict[str, Any]) -> List[str]:
@@ -203,7 +246,12 @@ def _run(args: argparse.Namespace) -> int:
     required_stages = [item.strip() for item in str(args.required_stages).split(",") if item.strip()]
     if not required_stages:
         required_stages = list(DEFAULT_REQUIRED_STAGES)
-    stage_policy = _merged_stage_policy(required_stages, _load_stage_policy(str(args.stage_policy_json)))
+    policy_meta = resolve_stage_policy(
+        stage_policy_json=str(args.stage_policy_json),
+        policy_version=str(args.policy_version),
+        policy_library_dir=str(args.policy_library_dir),
+    )
+    stage_policy = _merged_stage_policy(required_stages, policy_meta["policy_by_stage"])
 
     candidate = _load_json(candidate_path)
     reports = [_load_json(path) for path in report_paths]
@@ -219,6 +267,8 @@ def _run(args: argparse.Namespace) -> int:
         "trace_id": str(candidate.get("trace_id") or ""),
         "decision": gate_result["decision"],
         "reason_codes": gate_result["reason_codes"],
+        "policy_version": policy_meta["policy_version"],
+        "policy_source": policy_meta["policy_source"],
         "required_stages": required_stages,
         "stage_policy_snapshot": stage_policy,
         "stage_results": gate_result["stage_results"],

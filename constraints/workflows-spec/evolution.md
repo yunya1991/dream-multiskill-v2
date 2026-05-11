@@ -19,6 +19,7 @@ P0 执行文档：
 - `constraints/workflows-spec/evolution-p0-decision-gate-spec-v0.1.md`
 - `constraints/workflows-spec/evolution-p0-rollback-pointer-spec-v0.1.md`
 - `constraints/workflows-spec/evolution-p1-stage-policy-spec-v0.1.md`
+- `constraints/workflows-spec/evolution-p1-5-policy-template-versioning-spec-v0.1.md`
 
 闭环主链：
 
@@ -115,3 +116,4 @@ P0 执行文档：
 - `2026-05-12`：新增 `evolution-decision-gate` 工作流入口与 Day2 自动化验收报告，完成 P0 Decision Gate 流程化闭环。
 - `2026-05-12`：P1 接入 `stress/scenario/backtest` 多门禁聚合判定，并引入 `stage_policy` 阶段级策略。
 - `2026-05-12`：完成 P1 聚合判定验收，沉淀 `stage_policy` 规范与正反样本审计产物。
+- `2026-05-12`：进入 P1.5，新增 `policy_version` 模板库机制与回归矩阵执行器。

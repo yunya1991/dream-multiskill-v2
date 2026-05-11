@@ -62,3 +62,7 @@ P1 默认 required stages：
 工作流入口：
 
 - `.github/workflows/evolution-decision-gate.yml`
+
+P1.5 增量说明：
+
+- `policy_version` 与模板库机制见 `evolution-p1-5-policy-template-versioning-spec-v0.1.md`
