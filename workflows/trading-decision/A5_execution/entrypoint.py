@@ -1,11 +1,22 @@
 import json
+import importlib.util
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 
+def _load_protocol_module():
+    mod_path = Path(__file__).resolve().parents[1] / "protocol" / "message.py"
+    spec = importlib.util.spec_from_file_location("trading_protocol_message", mod_path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)
+    return module
+
+
 def run_a5_execution(payload: Dict[str, Any], output_dir: Optional[Path] = None) -> Dict[str, Any]:
     """Thin wrapper for A5 execution plan artifact output."""
+    proto = _load_protocol_module()
     direction = str(payload.get('direction') or 'LONG').upper()
     side = 'BUY' if direction == 'LONG' else 'SELL'
 
@@ -21,13 +32,27 @@ def run_a5_execution(payload: Dict[str, Any], output_dir: Optional[Path] = None)
     base.mkdir(parents=True, exist_ok=True)
     out_path = base / f'a5_execution_{ts}.json'
 
-    result = {
+    result = proto.ensure_contract_fields(
+        {
         'stage_id': 'A5',
         'trace_id': payload.get('trace_id'),
         'direction': direction,
         'order_plan': order_plan,
         'timestamp': ts,
-    }
-    out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+        },
+        producer="workflows/trading-decision/A5_execution",
+    )
     result['artifact_path'] = str(out_path)
-    return result
+    proto.require_contract_fields(result)
+    out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    return proto.build_envelope(
+        source="A5",
+        target="A9",
+        message_type="REQUEST",
+        priority="HIGH",
+        loop_type="execution",
+        trace_id=result["trace_id"],
+        correlation_id=payload.get("correlation_id"),
+        timeout_ms=60000,
+        payload=result,
+    )

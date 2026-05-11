@@ -24,7 +24,7 @@
   - `trace_id`
   - `loop_type`
   - `timeout_ms`
-- [ ] 各阶段入口输出统一封装为 `{"header": ..., "payload": ...}`（当前 A6 与 orchestrator 已接入）
+- [x] 各阶段入口输出统一封装为 `{"header": ..., "payload": ...}`（A0-A9 已接入）
 
 ### P0-2 统一必填契约字段
 
@@ -34,7 +34,7 @@
   - `evidence_refs[]`
   - `producer`
   - `schema_version`
-- [ ] 在测试中增加缺字段即失败（fail-closed）断言
+- [x] 在测试中增加缺字段即失败（fail-closed）断言
 
 ### P0-3 A6 五级路由引擎
 
@@ -103,11 +103,11 @@
 
 ## 5. 交付物清单
 
-- [ ] `workflows/trading-decision/protocol/*`
-- [ ] `workflows/trading-decision/orchestrator/*`
+- [x] `workflows/trading-decision/protocol/*`
+- [x] `workflows/trading-decision/orchestrator/*`
 - [ ] `workflows/trading-decision/transports/*`
-- [ ] `tests/test_trading_protocol_*.py`
-- [ ] `tests/test_trading_orchestrator_*.py`
+- [x] `tests/test_trading_protocol_*.py`
+- [x] `tests/test_trading_orchestrator_*.py`
 - [ ] `constraints/workflows-spec/trading.md` 同步系统级状态
 - [ ] `constraints/workflows-spec/communication-contract-v0.1.md` 增补同步记录
 

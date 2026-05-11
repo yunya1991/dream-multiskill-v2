@@ -14,6 +14,10 @@ def _load_module(rel_path: str):
     return module
 
 
+def _payload(out):
+    return out["payload"]
+
+
 def test_a0_entrypoint_selects_primary_contradiction():
     mod = _load_module("workflows/trading-decision/A0_contradiction/entrypoint.py")
 
@@ -26,9 +30,13 @@ def test_a0_entrypoint_selects_primary_contradiction():
             ],
         }
     )
-    assert out["stage_id"] == "A0"
-    assert out["primary_contradiction"]["id"] == "cx2"
-    assert out["direction"] == "DOWN"
+    assert out["header"]["source"] == "A0"
+    assert out["header"]["target"] == "A1"
+    assert out["header"]["loop_type"] == "governance"
+    payload = _payload(out)
+    assert payload["stage_id"] == "A0"
+    assert payload["primary_contradiction"]["id"] == "cx2"
+    assert payload["direction"] == "DOWN"
 
 
 def test_a1_entrypoint_writes_research_artifact(tmp_path: Path):
@@ -42,9 +50,12 @@ def test_a1_entrypoint_writes_research_artifact(tmp_path: Path):
         },
         output_dir=tmp_path,
     )
-    assert out["stage_id"] == "A1"
-    assert out["artifact_path"]
-    assert Path(out["artifact_path"]).exists()
+    assert out["header"]["source"] == "A1"
+    assert out["header"]["target"] == "A2"
+    payload = _payload(out)
+    assert payload["stage_id"] == "A1"
+    assert payload["artifact_path"]
+    assert Path(payload["artifact_path"]).exists()
 
 
 def test_a2_entrypoint_generates_first_principles_output(tmp_path: Path):
@@ -59,9 +70,12 @@ def test_a2_entrypoint_generates_first_principles_output(tmp_path: Path):
         },
         output_dir=tmp_path,
     )
-    assert out["stage_id"] == "A2"
-    assert out["least_resistance_path"] in {"UP", "DOWN", "NEUTRAL"}
-    assert Path(out["artifact_path"]).exists()
+    assert out["header"]["source"] == "A2"
+    assert out["header"]["target"] == "A3"
+    payload = _payload(out)
+    assert payload["stage_id"] == "A2"
+    assert payload["least_resistance_path"] in {"UP", "DOWN", "NEUTRAL"}
+    assert Path(payload["artifact_path"]).exists()
 
 
 def test_phase1_trade_skills_exist():

@@ -14,3 +14,4 @@
 - `a0-a9-tooling-audit-2026-05-11.md`：A0-A9 完整闭环相关工具核查（入口/技能/记忆/门禁）
 - `a0-a9-system-level-implementation-checklist.md`：A0-A9 协议与三大闭环系统级实现清单（P0/P1/P2）
 - `a0-a9-system-level-implementation-checklist.md`（2026-05-11 更新）：P0 第一轮实现已落地（协议模块、A6 五级路由、执行环编排）
+- `a0-a9-system-level-implementation-checklist.md`（2026-05-11 更新）：P0 收尾完成（全阶段 envelope 输出 + fail-closed 门禁测试）

@@ -93,6 +93,17 @@ def run_a6_intelligence(payload: Dict[str, Any], output_dir: Optional[Path] = No
         },
         producer="workflows/trading-decision/A6_intelligence",
     )
-    out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     result['artifact_path'] = str(out_path)
-    return result
+    proto.require_contract_fields(result)
+    out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    return proto.build_envelope(
+        source="A6",
+        target="A4",
+        message_type="NOTIFICATION",
+        priority="MEDIUM",
+        loop_type="intelligence",
+        trace_id=trace_id,
+        correlation_id=correlation_id,
+        timeout_ms=30000,
+        payload=result,
+    )
