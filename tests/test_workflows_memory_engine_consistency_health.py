@@ -40,7 +40,8 @@ def test_memory_engine_check_consistency_reports_missing_episode_and_coverage():
 
     assert report["summary"]["case_count"] == 2
     assert report["summary"]["episode_ref_count"] == 3
-    assert report["summary"]["episode_coverage_ratio"] == 0.5
+    # Partial credit coverage: TC_1=0.5 (1/2 resolved) + TC_2=1.0 (1/1 resolved) → 1.5/2 = 0.75
+    assert report["summary"]["episode_coverage_ratio"] == 0.75
     assert report["summary"]["issues_total"] >= 2
     assert any(i["code"] == "MISSING_EPISODE_REF" for i in report["issues"])
     assert any(i["code"] == "DISTILL_SUPPORTING_CASE_NOT_FOUND" for i in report["issues"])

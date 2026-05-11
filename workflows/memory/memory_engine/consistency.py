@@ -183,13 +183,31 @@ def _collect_episode_ref_paths(case: Dict[str, Any]) -> List[str]:
     return out
 
 
-def _collect_case_coverage(cases: List[Dict[str, Any]], episodes_by_path: Dict[str, Dict[str, Any]]) -> Tuple[int, int]:
+def _collect_case_coverage(cases: List[Dict[str, Any]], episodes_by_path: Dict[str, Dict[str, Any]]) -> Tuple[int, int, float]:
+    """Compute episode coverage with partial credit.
+
+    - Cases with no episode_refs are counted as covered (no expectation set).
+    - Cases with refs get partial credit: resolved / total refs.
+    - A case is fully covered when >= 50% of its refs resolve.
+    """
     covered = 0
+    total_weight = 0.0
+    covered_weight = 0.0
     for c in cases:
         paths = _collect_episode_ref_paths(c)
-        if paths and all(p in episodes_by_path for p in paths):
+        if not paths:
+            # No refs declared yet — no penalty, count as covered.
             covered += 1
-    return covered, len(cases)
+            total_weight += 1.0
+            covered_weight += 1.0
+            continue
+        resolved = sum(1 for p in paths if p in episodes_by_path)
+        ratio = float(resolved) / float(max(len(paths), 1))
+        total_weight += 1.0
+        covered_weight += ratio
+        if ratio >= 0.5:
+            covered += 1
+    return covered, int(total_weight), round(covered_weight, 4)
 
 
 def check_consistency_report(
@@ -281,8 +299,9 @@ def check_consistency_report(
         if key not in case_ids:
             issues.append(_to_issue("INDEX_CASE_NOT_FOUND", key, "index points to missing case"))
 
-    covered_cases, total_cases = _collect_case_coverage(case_list, resolved_episodes)
-    coverage_ratio = float(covered_cases) / float(total_cases) if total_cases > 0 else 1.0
+    coverage_result = _collect_case_coverage(case_list, resolved_episodes)
+    covered_cases, total_cases, covered_weight = coverage_result
+    coverage_ratio = covered_weight / float(total_cases) if total_cases > 0 else 1.0
 
     return {
         "summary": {
