@@ -27,7 +27,17 @@ def read_changed_files(path: str) -> List[str]:
     p = Path(path)
     if not p.exists():
         return []
-    return [line.strip() for line in p.read_text(encoding="utf-8").splitlines() if line.strip()]
+    files: List[str] = []
+    for raw_line in p.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        # Git may emit quoted paths for non-ASCII file names when quotePath is enabled.
+        # Normalize to avoid false "unknown top-level directory" findings like `"skills`.
+        if line.startswith('"') and line.endswith('"'):
+            line = line[1:-1]
+        files.append(line)
+    return files
 
 
 def starts_with_any(path: str, prefixes: Iterable[str]) -> bool:
