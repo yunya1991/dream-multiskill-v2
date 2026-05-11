@@ -43,6 +43,14 @@ on:
         description: "Run policy regression matrix"
         required: false
         default: "false"
+      run_priority_score:
+        description: "Run candidate priority score"
+        required: false
+        default: "false"
+      run_version_dashboard:
+        description: "Run version compare dashboard"
+        required: false
+        default: "false"
       regression_matrix_json:
         description: "Regression matrix JSON path"
         required: false
@@ -123,6 +131,23 @@ jobs:
             --matrix-json "$MATRIX_JSON" \
             --output-json artifacts/evolution/policy/regression-matrix-summary-${{ github.run_id }}.json
 
+      - name: Run candidate priority score
+        if: ${{ github.event.inputs.run_priority_score == 'true' && github.event.inputs.dry_run != 'true' }}
+        run: |
+          LATEST_DECISION="$(ls -t artifacts/evolution/decision/decision-*.json | head -n 1)"
+          python scripts/ci/evolution_candidate_priority_score.py \
+            --candidate-json "${{ github.event.inputs.candidate_path || 'artifacts/evolution/feedback/candidate_positive_20260511.json' }}" \
+            --decision-json "$LATEST_DECISION" \
+            --output-json artifacts/evolution/scoring/priority-score-${{ github.run_id }}.json
+
+      - name: Run version compare dashboard
+        if: ${{ github.event.inputs.run_version_dashboard == 'true' && github.event.inputs.dry_run != 'true' }}
+        run: |
+          python scripts/ci/evolution_version_compare_dashboard.py \
+            --decision-dir artifacts/evolution/decision \
+            --rollback-dir artifacts/evolution/rollback \
+            --output-json artifacts/evolution/dashboard/version-compare-${{ github.run_id }}.json
+
       - name: Upload decision artifacts
         if: ${{ github.event.inputs.dry_run != 'true' }}
         uses: actions/upload-artifact@v4
@@ -132,5 +157,7 @@ jobs:
             artifacts/evolution/decision/*.json
             artifacts/evolution/rollback/*.json
             artifacts/evolution/approval/*.json
+            artifacts/evolution/scoring/*.json
+            artifacts/evolution/dashboard/*.json
             artifacts/evolution/policy/regression-matrix-summary-${{ github.run_id }}.json
           if-no-files-found: error

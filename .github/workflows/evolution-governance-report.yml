@@ -1,0 +1,46 @@
+name: Evolution Governance Report
+
+on:
+  schedule:
+    - cron: "20 2 * * 1"
+    - cron: "35 3 1 * *"
+  workflow_dispatch:
+    inputs:
+      period:
+        description: "Report period (week/month)"
+        required: false
+        default: "week"
+
+permissions:
+  contents: read
+
+jobs:
+  governance-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build governance report
+        run: |
+          PERIOD_INPUT="${{ github.event.inputs.period || '' }}"
+          if [ -z "$PERIOD_INPUT" ]; then
+            PERIOD_INPUT="week"
+          fi
+          python scripts/ci/evolution_governance_report.py \
+            --period "$PERIOD_INPUT" \
+            --decision-glob "artifacts/evolution/**/decision-*.json" \
+            --rollback-exec-glob "artifacts/evolution/rollback/executions/*.json" \
+            --output-json artifacts/evolution/reports/${PERIOD_INPUT}/governance-report-${{ github.run_id }}.json
+
+      - name: Upload governance report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: evolution-governance-report-${{ github.run_id }}
+          path: artifacts/evolution/reports/**/*.json
+          if-no-files-found: error

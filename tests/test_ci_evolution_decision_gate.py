@@ -580,3 +580,67 @@ def test_decision_gate_approves_with_valid_approval_ticket(tmp_path):
     assert payload["approval"]["decision"] == "approve"
     approval_payload = json.loads((tmp_path / "approval" / "approval-result-20260512T103500Z.json").read_text(encoding="utf-8"))
     assert approval_payload["ticket_id"] == "appr-010"
+
+
+def test_decision_gate_allows_promotion_when_approval_not_required(tmp_path):
+    mod = _load_module("scripts/ci/evolution_decision_gate.py")
+    candidate = {
+        "candidate_id": "cand-011",
+        "trace_id": "trace-011",
+        "constraint_version_base": "v0.1",
+        "evidence_refs": ["artifacts/evolution/feedback/evidence_pack_011.json"],
+        "schema_version": "evolution-p0-candidate-v0.1",
+    }
+    reports = [
+        {"candidate_id": "cand-011", "stage": "audit", "pass": True, "violations": []},
+        {"candidate_id": "cand-011", "stage": "sandbox", "pass": True, "violations": []},
+        {"candidate_id": "cand-011", "stage": "stress", "pass": True, "violations": []},
+        {"candidate_id": "cand-011", "stage": "scenario", "pass": True, "violations": []},
+        {"candidate_id": "cand-011", "stage": "backtest", "pass": True, "violations": []},
+    ]
+    candidate_path = tmp_path / "candidate.json"
+    _write_json(candidate_path, candidate)
+    report_paths = []
+    for i, payload in enumerate(reports):
+        path = tmp_path / f"r{i}.json"
+        _write_json(path, payload)
+        report_paths.append(path)
+
+    ticket_path = tmp_path / "approval_ticket.json"
+    _write_json(
+        ticket_path,
+        {
+            "ticket_id": "appr-011",
+            "candidate_id": "cand-other",
+            "trace_id": "trace-other",
+            "policy_version": "wrong.v1",
+            "approved_at": "2026-05-12T00:00:00Z",
+            "expires_at": "2027-05-12T00:00:00Z",
+            "scope": {"to_versions": ["v9.9.9"]},
+            "schema_version": "evolution-p2-approval-ticket-v0.1",
+        },
+    )
+
+    rc = mod.main(
+        [
+            "--candidate",
+            str(candidate_path),
+            "--reports",
+            ",".join(str(path) for path in report_paths),
+            "--to-version",
+            "v0.1.2",
+            "--approval-ticket-json",
+            str(ticket_path),
+            "--artifacts-dir",
+            str(tmp_path / "decision"),
+            "--rollback-dir",
+            str(tmp_path / "rollback"),
+            "--approval-artifacts-dir",
+            str(tmp_path / "approval"),
+            "--timestamp",
+            "2026-05-12T10:40:00Z",
+        ]
+    )
+    assert rc == 0
+    payload = json.loads((tmp_path / "decision" / "decision-20260512T104000Z.json").read_text(encoding="utf-8"))
+    assert payload["decision"] == "approve"

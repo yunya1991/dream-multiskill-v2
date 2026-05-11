@@ -21,6 +21,7 @@ P0 执行文档：
 - `constraints/workflows-spec/evolution-p1-stage-policy-spec-v0.1.md`
 - `constraints/workflows-spec/evolution-p1-5-policy-template-versioning-spec-v0.1.md`
 - `constraints/workflows-spec/evolution-p2-approval-gate-spec-v0.1.md`
+- `constraints/workflows-spec/evolution-p2-ops-automation-spec-v0.1.md`
 
 闭环主链：
 
@@ -120,3 +121,4 @@ P0 执行文档：
 - `2026-05-12`：完成 P1 聚合判定验收，沉淀 `stage_policy` 规范与正反样本审计产物。
 - `2026-05-12`：进入 P1.5，新增 `policy_version` 模板库机制与回归矩阵执行器。
 - `2026-05-12`：进入 P2 审批流绑定，新增 approval ticket fail-closed 门禁与审计产物规范。
+- `2026-05-12`：补全 P2 运营自动化（评分、版本看板、自动回滚执行器、周/月治理报表）并接入 workflow。

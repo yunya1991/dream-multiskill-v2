@@ -1,0 +1,56 @@
+name: Constraint Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      rollback_pointer_json:
+        description: "Rollback pointer JSON path"
+        required: false
+        default: "artifacts/evolution/rollback/rollback-pointer-20260512T103000Z.json"
+      execution_mode:
+        description: "Rollback mode (dry-run/apply)"
+        required: false
+        default: "dry-run"
+      allow_apply:
+        description: "Allow apply mode"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Execute rollback
+        run: |
+          POINTER_JSON="${{ github.event.inputs.rollback_pointer_json || 'artifacts/evolution/rollback/rollback-pointer-20260512T103000Z.json' }}"
+          MODE="${{ github.event.inputs.execution_mode || 'dry-run' }}"
+          ALLOW_APPLY="${{ github.event.inputs.allow_apply || 'false' }}"
+
+          EXTRA_ARGS=()
+          if [ "$ALLOW_APPLY" = "true" ]; then
+            EXTRA_ARGS+=(--allow-apply)
+          fi
+
+          python scripts/ci/constraint_rollback.py \
+            --rollback-pointer-json "$POINTER_JSON" \
+            --execution-mode "$MODE" \
+            --output-json artifacts/evolution/rollback/executions/rollback-execution-${{ github.run_id }}.json \
+            "${EXTRA_ARGS[@]}"
+
+      - name: Upload rollback execution artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: constraint-rollback-${{ github.run_id }}
+          path: artifacts/evolution/rollback/executions/*.json
+          if-no-files-found: error
