@@ -31,6 +31,14 @@ on:
         description: "Policy library directory"
         required: false
         default: "artifacts/evolution/policy/templates"
+      approval_ticket_json:
+        description: "Approval ticket JSON path"
+        required: false
+        default: "artifacts/evolution/approval/approval_ticket_positive_20260511.json"
+      require_approval_ticket:
+        description: "Require approval ticket"
+        required: false
+        default: "true"
       run_regression_matrix:
         description: "Run policy regression matrix"
         required: false
@@ -68,6 +76,8 @@ jobs:
           STAGE_POLICY_JSON="${{ github.event.inputs.stage_policy_json || '' }}"
           POLICY_VERSION="${{ github.event.inputs.policy_version || '' }}"
           POLICY_LIBRARY_DIR="${{ github.event.inputs.policy_library_dir || 'artifacts/evolution/policy/templates' }}"
+          APPROVAL_TICKET_JSON="${{ github.event.inputs.approval_ticket_json || 'artifacts/evolution/approval/approval_ticket_positive_20260511.json' }}"
+          REQUIRE_APPROVAL_TICKET="${{ github.event.inputs.require_approval_ticket || 'true' }}"
           DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
 
           POLICY_ARGS=()
@@ -77,6 +87,12 @@ jobs:
           fi
           if [ -n "$STAGE_POLICY_JSON" ]; then
             POLICY_ARGS+=(--stage-policy-json "$STAGE_POLICY_JSON")
+          fi
+          if [ "$REQUIRE_APPROVAL_TICKET" = "true" ]; then
+            POLICY_ARGS+=(--require-approval-ticket)
+          fi
+          if [ -n "$APPROVAL_TICKET_JSON" ]; then
+            POLICY_ARGS+=(--approval-ticket-json "$APPROVAL_TICKET_JSON")
           fi
 
           if [ "$DRY_RUN" = "true" ]; then
@@ -95,7 +111,8 @@ jobs:
               --to-version "$TO_VERSION" \
               "${POLICY_ARGS[@]}" \
               --artifacts-dir artifacts/evolution/decision \
-              --rollback-dir artifacts/evolution/rollback
+              --rollback-dir artifacts/evolution/rollback \
+              --approval-artifacts-dir artifacts/evolution/approval
           fi
 
       - name: Run policy regression matrix
@@ -114,5 +131,6 @@ jobs:
           path: |
             artifacts/evolution/decision/*.json
             artifacts/evolution/rollback/*.json
+            artifacts/evolution/approval/*.json
             artifacts/evolution/policy/regression-matrix-summary-${{ github.run_id }}.json
           if-no-files-found: error
