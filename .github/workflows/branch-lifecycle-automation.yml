@@ -1,0 +1,56 @@
+name: Branch Lifecycle Automation
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run in dry-run mode"
+        required: false
+        default: "false"
+      stale_days:
+        description: "Stale threshold days"
+        required: false
+        default: "7"
+      retention_days:
+        description: "Merged branch retention days"
+        required: false
+        default: "14"
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run branch lifecycle bot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+          STALE_DAYS="${{ github.event.inputs.stale_days || '7' }}"
+          RETENTION_DAYS="${{ github.event.inputs.retention_days || '14' }}"
+          if [ "$DRY_RUN" = "true" ]; then
+            python scripts/ci/branch_lifecycle_bot.py --dry-run --stale-days "$STALE_DAYS" --retention-days "$RETENTION_DAYS"
+          else
+            python scripts/ci/branch_lifecycle_bot.py --stale-days "$STALE_DAYS" --retention-days "$RETENTION_DAYS"
+          fi
+
+      - name: Upload lifecycle artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: branch-lifecycle-${{ github.run_id }}
+          path: artifacts/branch_lifecycle/*.json
+          if-no-files-found: error
