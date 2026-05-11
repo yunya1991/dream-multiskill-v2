@@ -10,3 +10,4 @@
 - `trading.md`（2026-05-10 更新）：新增 A0-A9 显式入口映射与三批技能迁移清单
 - `a0-a9-fullchain-checklist.md`：A0-A9 全链路迁移对照清单（源仓 vs 本地仓）
 - `skill-inventory-checklist.md`：SKILL 全量迁移清单（分层明细 + 缺口）
+- `skill-inventory-checklist.md`（2026-05-11 更新）：基线技能覆盖率审计（47/47）与重要级分层状态
