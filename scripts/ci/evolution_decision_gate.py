@@ -382,7 +382,7 @@ def _run(args: argparse.Namespace) -> int:
             to_version=str(args.to_version),
             now_ts=timestamp,
         )
-        if approval_result["decision"] == "reject":
+        if bool(args.require_approval_ticket) and approval_result["decision"] == "reject":
             gate_result["reason_codes"] = list(dict.fromkeys(gate_result["reason_codes"] + approval_result["reason_codes"]))
             gate_result["decision"] = "reject"
 
