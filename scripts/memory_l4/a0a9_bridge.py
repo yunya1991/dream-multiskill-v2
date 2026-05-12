@@ -210,6 +210,21 @@ def enrich_case_with_stages(
     if case.get("version") == "v0.1":
         case["version"] = "v0.2"
 
+    # 初始化 L4 状态 (如果缺失)
+    if not case.get("l4_status"):
+        case["l4_status"] = "M0_CASE_REGISTERED"
+
+    # 从 episode 提取 decision_outcome (如果缺失)
+    if not case.get("decision_outcome"):
+        out_data = episode.get("outcome") or {}
+        case["decision_outcome"] = {
+            "pnl_pct": out_data.get("realized_pnl_pct") or out_data.get("unrealized_pnl_pct"),
+            "pnl_usdt": out_data.get("realized_pnl_usdt") or out_data.get("unrealized_pnl_usdt"),
+            "drawdown": out_data.get("max_drawdown"),
+            "exit_reason": out_data.get("exit_reason") or out_data.get("stop_reason"),
+            "goal_achieved": out_data.get("goal_achieved"),
+        }
+
     target = out_path or case_path
     target.write_text(json.dumps(case, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return target

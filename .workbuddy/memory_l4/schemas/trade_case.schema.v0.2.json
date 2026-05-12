@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "TradeCase",
-  "description": "TradeCase v0.2 — L1/L4 共享格式，新增 thinking_chain, evidence_chain, review 扩展",
+  "description": "TradeCase v0.2 — L1/L4 共享格式，新增 thinking_chain, evidence_chain, decision_outcome, l4_status, review 扩展",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -125,6 +125,39 @@
           "default": []
         }
       }
+    },
+    "decision_outcome": {
+      "type": "object",
+      "description": "交易评估结论: 收益率、回撤、离场原因、是否达成目标",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "pnl_pct": {
+          "type": ["number", "null"],
+          "description": "收益率百分比"
+        },
+        "pnl_usdt": {
+          "type": ["number", "null"],
+          "description": "收益金额 (USDT)"
+        },
+        "drawdown": {
+          "type": ["number", "null"],
+          "description": "最大回撤"
+        },
+        "exit_reason": {
+          "type": ["string", "null"],
+          "description": "离场原因"
+        },
+        "goal_achieved": {
+          "type": ["boolean", "null"],
+          "description": "是否达成目标"
+        }
+      }
+    },
+    "l4_status": {
+      "type": ["string", "null"],
+      "description": "L4 内部状态: M0_CASE_REGISTERED / M1_REVIEW_COMPLETED / M2_DISTILL_COMPLETED / M3_STATS_UPDATED / M4_CANDIDATE_EMITTED / M_FAIL",
+      "default": null
     },
     "plan": {
       "type": "object",
