@@ -1,0 +1,53 @@
+name: Memory Candidate Ingest
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_path:
+        description: "Candidate JSON path"
+        required: false
+        default: "artifacts/evolution/feedback/candidate_positive_20260511.json"
+
+permissions:
+  contents: read
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate and ingest candidate
+        run: |
+          CANDIDATE_PATH="${{ github.event.inputs.candidate_path || 'artifacts/evolution/feedback/candidate_positive_20260511.json' }}"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          candidate_path = Path(os.environ["CANDIDATE_PATH"])
+          payload = json.loads(candidate_path.read_text(encoding="utf-8"))
+          required = ["candidate_id", "trace_id", "constraint_version_base", "evidence_refs", "schema_version"]
+          missing = [k for k in required if k not in payload]
+          if missing:
+              raise SystemExit(f"candidate missing fields: {missing}")
+          out = Path("artifacts/evolution/feedback") / f"ingested-candidate-{os.environ['GITHUB_RUN_ID']}.json"
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+          print(f"ingested candidate -> {out}")
+          PY
+        env:
+          CANDIDATE_PATH: ${{ github.event.inputs.candidate_path || 'artifacts/evolution/feedback/candidate_positive_20260511.json' }}
+
+      - name: Upload ingest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: evolution-candidate-ingest-${{ github.run_id }}
+          path: artifacts/evolution/feedback/ingested-candidate-*.json
+          if-no-files-found: error

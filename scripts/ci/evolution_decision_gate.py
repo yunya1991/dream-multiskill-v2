@@ -97,6 +97,13 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
         default="artifacts/evolution/policy/templates",
         help="Policy template directory used with --policy-version",
     )
+    parser.add_argument("--approval-ticket-json", default="", help="Path to approval ticket JSON")
+    parser.add_argument(
+        "--require-approval-ticket",
+        action="store_true",
+        help="Require approval ticket to promote",
+    )
+    parser.add_argument("--approval-artifacts-dir", default="artifacts/evolution/approval")
     parser.add_argument("--artifacts-dir", default="artifacts/evolution/decision")
     parser.add_argument("--rollback-dir", default="artifacts/evolution/rollback")
     parser.add_argument("--timestamp", default="")
@@ -237,6 +244,100 @@ def build_rollback_pointer(
     }
 
 
+def _parse_iso_utc(value: str) -> Optional[datetime]:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        dt = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def _to_version_allowed(scope: Any, to_version: str) -> bool:
+    if not isinstance(scope, dict):
+        return False
+    if bool(scope.get("all_versions")):
+        return True
+    versions = scope.get("to_versions")
+    if not isinstance(versions, list):
+        return False
+    allow_list = {str(item).strip() for item in versions if str(item).strip()}
+    return str(to_version).strip() in allow_list
+
+
+def evaluate_approval_ticket(
+    *,
+    require_ticket: bool,
+    approval_ticket_json: str,
+    candidate: Dict[str, Any],
+    policy_version: str,
+    to_version: str,
+    now_ts: str,
+) -> Dict[str, Any]:
+    source = str(approval_ticket_json or "")
+    out: Dict[str, Any] = {
+        "required": bool(require_ticket),
+        "decision": "skip",
+        "reason_codes": [],
+        "ticket_id": "",
+        "approver": "",
+        "approved_at": "",
+        "expires_at": "",
+        "scope": {},
+        "source": source or "none",
+    }
+
+    if not approval_ticket_json:
+        if require_ticket:
+            out["decision"] = "reject"
+            out["reason_codes"] = ["APPROVAL_TICKET_REQUIRED"]
+        return out
+
+    ticket = _load_json(Path(approval_ticket_json))
+    if not isinstance(ticket, dict):
+        out["decision"] = "reject"
+        out["reason_codes"] = ["APPROVAL_TICKET_INVALID"]
+        return out
+
+    out["ticket_id"] = str(ticket.get("ticket_id") or "")
+    out["approver"] = str(ticket.get("approver") or "")
+    out["approved_at"] = str(ticket.get("approved_at") or "")
+    out["expires_at"] = str(ticket.get("expires_at") or "")
+    out["scope"] = ticket.get("scope", {})
+
+    reason_codes: List[str] = []
+    if str(ticket.get("candidate_id") or "") != str(candidate.get("candidate_id") or ""):
+        reason_codes.append("APPROVAL_CANDIDATE_MISMATCH")
+    if str(ticket.get("trace_id") or "") != str(candidate.get("trace_id") or ""):
+        reason_codes.append("APPROVAL_TRACE_MISMATCH")
+    if str(ticket.get("policy_version") or "").strip() != str(policy_version or "").strip():
+        reason_codes.append("APPROVAL_POLICY_VERSION_MISMATCH")
+    if not _to_version_allowed(ticket.get("scope", {}), str(to_version)):
+        reason_codes.append("APPROVAL_SCOPE_MISMATCH")
+
+    now_dt = _parse_iso_utc(now_ts)
+    approved_dt = _parse_iso_utc(str(ticket.get("approved_at") or ""))
+    expires_dt = _parse_iso_utc(str(ticket.get("expires_at") or ""))
+    if now_dt is None or approved_dt is None or expires_dt is None:
+        reason_codes.append("APPROVAL_TICKET_INVALID")
+    else:
+        if now_dt < approved_dt:
+            reason_codes.append("APPROVAL_NOT_YET_EFFECTIVE")
+        if now_dt > expires_dt:
+            reason_codes.append("APPROVAL_EXPIRED")
+
+    dedup = list(dict.fromkeys(reason_codes))
+    out["reason_codes"] = dedup
+    out["decision"] = "approve" if not dedup else "reject"
+    return out
+
+
 def _run(args: argparse.Namespace) -> int:
     timestamp = args.timestamp or _now_iso()
     ts_name = timestamp.replace("-", "").replace(":", "").replace("Z", "Z").replace(".", "")
@@ -261,6 +362,29 @@ def _run(args: argparse.Namespace) -> int:
         required_stages=required_stages,
         stage_policy=stage_policy,
     )
+    approval_result: Dict[str, Any] = {
+        "required": bool(args.require_approval_ticket),
+        "decision": "skip",
+        "reason_codes": [],
+        "ticket_id": "",
+        "approver": "",
+        "approved_at": "",
+        "expires_at": "",
+        "scope": {},
+        "source": "none",
+    }
+    if gate_result["decision"] == "approve":
+        approval_result = evaluate_approval_ticket(
+            require_ticket=bool(args.require_approval_ticket),
+            approval_ticket_json=str(args.approval_ticket_json),
+            candidate=candidate,
+            policy_version=policy_meta["policy_version"],
+            to_version=str(args.to_version),
+            now_ts=timestamp,
+        )
+        if bool(args.require_approval_ticket) and approval_result["decision"] == "reject":
+            gate_result["reason_codes"] = list(dict.fromkeys(gate_result["reason_codes"] + approval_result["reason_codes"]))
+            gate_result["decision"] = "reject"
 
     decision_record: Dict[str, Any] = {
         "candidate_id": str(candidate.get("candidate_id") or ""),
@@ -272,6 +396,7 @@ def _run(args: argparse.Namespace) -> int:
         "required_stages": required_stages,
         "stage_policy_snapshot": stage_policy,
         "stage_results": gate_result["stage_results"],
+        "approval": approval_result,
         "rollback_pointer_id": "",
         "timestamp": timestamp,
         "schema_version": "evolution-p0-decision-record-v0.1",
@@ -310,6 +435,9 @@ def _run(args: argparse.Namespace) -> int:
         if promotion_record is not None:
             promotion_out = Path(args.artifacts_dir) / f"promotion-{ts_name}.json"
             _write_json(promotion_out, promotion_record)
+        if bool(args.require_approval_ticket) or str(args.approval_ticket_json).strip():
+            approval_out = Path(args.approval_artifacts_dir) / f"approval-result-{ts_name}.json"
+            _write_json(approval_out, approval_result)
 
     print(json.dumps(decision_record, ensure_ascii=False))
     return 0 if gate_result["decision"] == "approve" else 1
