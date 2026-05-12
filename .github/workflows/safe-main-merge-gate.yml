@@ -62,6 +62,10 @@ jobs:
           pytest tests/test_ci_actions_node24_compat.py \
             tests/test_ci_trading_scheduler_workflows_p0.py \
             tests/test_trading_protocol_fail_closed_p0.py \
+            tests/test_trading_http_send_envelope_p1.py \
+            tests/test_trading_redis_streams_p1.py \
+            tests/test_trading_transport_router_p1.py \
+            tests/test_trading_transports_p1.py \
             tests/test_trading_governance_orchestrator_p1.py \
             tests/test_trading_system_loop_e2e_p1p2.py \
             tests/test_trading_replay_observability_p2.py \
