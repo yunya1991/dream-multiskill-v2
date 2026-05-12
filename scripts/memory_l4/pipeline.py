@@ -141,17 +141,20 @@ def step_distill(review_record: Dict[str, Any]) -> Dict[str, Any]:
     return distill
 
 
-def step_stats() -> Dict[str, Any]:
+def step_stats(case_data: Dict[str, Any]) -> Dict[str, Any]:
     """Step 5: 更新全局统计 (M3_STATS_UPDATED)。"""
     stats = stats_engine.compute_full_stats(snapshot_ts=now_iso_local())
     saved = stats_engine.save_stats(stats)
 
-    # 将所有 case 推进到 M3
-    for p in _list_json(memory_l4_cases_dir()):
-        case = json.loads(p.read_text(encoding="utf-8"))
-        if case.get("l4_status") in ("M0_CASE_REGISTERED", "M1_REVIEW_COMPLETED", "M2_DISTILL_COMPLETED"):
-            case["l4_status"] = "M3_STATS_UPDATED"
-            case_registry.save_json(p, case)
+    # 仅将当前 pipeline 的 case 推进到 M3
+    cid = case_data.get("case_id")
+    if cid:
+        case_path = memory_l4_cases_dir() / f"{cid}.json"
+        if case_path.exists():
+            case = json.loads(case_path.read_text(encoding="utf-8"))
+            if case.get("l4_status") in ("M0_CASE_REGISTERED", "M1_REVIEW_COMPLETED", "M2_DISTILL_COMPLETED"):
+                case["l4_status"] = "M3_STATS_UPDATED"
+                case_registry.save_json(case_path, case)
 
     print(f"[M3] Stats updated: {stats['snapshot_id']}")
     return stats
@@ -233,7 +236,7 @@ def run_pipeline(
         result["steps_executed"].append("distill")
 
     if "stats" in active_steps:
-        stats = step_stats()
+        stats = step_stats(case_data)
         result["stats"] = stats
         result["steps_executed"].append("stats")
 

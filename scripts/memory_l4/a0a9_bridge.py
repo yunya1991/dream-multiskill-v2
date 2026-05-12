@@ -178,6 +178,7 @@ def enrich_case_with_stages(
     case_id: str,
     stage_outputs: Dict[str, Dict[str, Any]],
     out_path: Optional[Path] = None,
+    episode: Optional[Dict[str, Any]] = None,
 ) -> Path:
     """将 A0-A9 阶段数据填充到已存在的 TradeCase。
 
@@ -185,6 +186,7 @@ def enrich_case_with_stages(
         case_id: TradeCase 标识
         stage_outputs: collect_stage_outputs 的返回值
         out_path: 输出路径，默认写入 cases 目录
+        episode: 可选，episode 原始数据，用于提取 decision_outcome
 
     Returns:
         写入的文件路径
@@ -214,8 +216,8 @@ def enrich_case_with_stages(
     if not case.get("l4_status"):
         case["l4_status"] = "M0_CASE_REGISTERED"
 
-    # 从 episode 提取 decision_outcome (如果缺失)
-    if not case.get("decision_outcome"):
+    # 从 episode 提取 decision_outcome (如果缺失且有 episode 数据)
+    if not case.get("decision_outcome") and episode:
         out_data = episode.get("outcome") or {}
         case["decision_outcome"] = {
             "pnl_pct": out_data.get("realized_pnl_pct") or out_data.get("unrealized_pnl_pct"),

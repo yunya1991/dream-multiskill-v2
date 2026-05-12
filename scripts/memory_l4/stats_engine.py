@@ -426,11 +426,16 @@ def compute_pnl_stats(cases: Optional[List[Dict[str, Any]]] = None) -> Dict[str,
         return {"count": 0, "mean": 0, "median": 0, "win_rate": 0, "max": 0, "min": 0}
     pnls.sort()
     wins = sum(1 for p in pnls if p > 0)
+    n = len(pnls)
+    if n % 2 == 1:
+        median = pnls[n // 2]
+    else:
+        median = (pnls[n // 2 - 1] + pnls[n // 2]) / 2
     return {
-        "count": len(pnls),
-        "mean": round(sum(pnls) / len(pnls), 3),
-        "median": round(pnls[len(pnls) // 2], 3),
-        "win_rate": round(wins / len(pnls), 3),
+        "count": n,
+        "mean": round(sum(pnls) / n, 3),
+        "median": round(median, 3),
+        "win_rate": round(wins / n, 3),
         "max": round(max(pnls), 3),
         "min": round(min(pnls), 3),
     }
@@ -478,3 +483,169 @@ def save_stats(stats: Dict[str, Any], out_path: Optional[Path] = None) -> Path:
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(stats, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return target
+
+
+# ---------------------------------------------------------------------------
+# v0.2: migration_trends — from deprecated stats_builder.py
+# ---------------------------------------------------------------------------
+
+def build_migration_trends(
+    snapshot_ts: str,
+    distills: Optional[List[Dict[str, Any]]] = None,
+) -> List[Dict[str, Any]]:
+    """从蒸馏记录构建迁移趋势序列。"""
+    if distills is None:
+        distills = _load_all_distills()
+    out: List[Dict[str, Any]] = []
+    for d in distills:
+        did = str(d.get("distill_id") or "")
+        if not did:
+            continue
+        q = d.get("quadrant") or {}
+        y_now = float(q.get("y") or 0.0)
+        history = d.get("migration_history") or []
+
+        series: List[Dict[str, Any]] = []
+        for rec in history:
+            ts = rec.get("ts")
+            y_new = rec.get("y_new")
+            if ts is None or y_new is None:
+                continue
+            series.append({"ts": str(ts), "y": float(y_new)})
+        series.append({"ts": snapshot_ts, "y": y_now})
+
+        out.append({"id": did, "kind": "distill", "series": series})
+    return out
+
+
+# ---------------------------------------------------------------------------
+# v0.2: performance — from deprecated stats_builder.py
+# ---------------------------------------------------------------------------
+
+def _episode_pnl(ep: Dict[str, Any]) -> Tuple[Optional[float], Optional[float]]:
+    """从 episode outcome 提取 pnl (usdt, pct)。"""
+    out = ep.get("outcome") or {}
+    pos = ep.get("position") or {}
+    pnl_usdt = out.get("unrealized_pnl_usdt")
+    if pnl_usdt is None:
+        pnl_usdt = out.get("unrealized_pnl")
+    if pnl_usdt is None:
+        pnl_usdt = pos.get("upl")
+    pnl_pct = out.get("unrealized_pnl_pct")
+    return (
+        float(pnl_usdt) if pnl_usdt is not None else None,
+        float(pnl_pct) if pnl_pct is not None else None,
+    )
+
+
+def _extract_episode_ref_path(case: Dict[str, Any]) -> Optional[str]:
+    """从 TradeCase 提取 episode 文件路径。"""
+    refs = ((case.get("execution") or {}).get("episode_refs") or [])
+    if not refs:
+        return None
+    p = str((refs[0] or {}).get("path") or "").strip()
+    return p if p else None
+
+
+def _read_episode(path: str) -> Dict[str, Any]:
+    """读取 episode JSON 文件。"""
+    ep = Path(path)
+    if not ep.is_absolute():
+        ep = _ROOT / ep
+    if not ep.exists():
+        return {}
+    try:
+        return json.loads(ep.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _load_episodes_by_case_id(cases: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """从 cases 批量加载 episodes，按 case_id 索引。"""
+    out: Dict[str, Dict[str, Any]] = {}
+    for c in cases:
+        cid = str(c.get("case_id") or "")
+        if not cid:
+            continue
+        p = _extract_episode_ref_path(c)
+        out[cid] = _read_episode(p) if p else {}
+    return out
+
+
+def _compute_max_drawdown(series: List[float]) -> float:
+    """计算累计收益曲线的最大回撤。"""
+    if not series:
+        return 0.0
+    peak = series[0]
+    mdd = 0.0
+    for v in series:
+        if v > peak:
+            peak = v
+        drawdown = peak - v
+        if drawdown > mdd:
+            mdd = drawdown
+    return mdd
+
+
+def compute_performance(
+    cases: Optional[List[Dict[str, Any]]] = None,
+    episodes_by_case_id: Optional[Dict[str, Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """计算详细收益指标：胜率、盈亏比、最大回撤等。"""
+    if cases is None:
+        cases = _load_all_cases()
+    if episodes_by_case_id is None:
+        episodes_by_case_id = _load_episodes_by_case_id(cases)
+
+    wins = 0
+    losses = 0
+    n_with_outcome = 0
+    pnl_usdts: List[float] = []
+    pnl_pcts: List[float] = []
+
+    ordered_cases = sorted(cases, key=lambda c: str(c.get("ts_start") or ""))
+    cum = 0.0
+    equity_curve: List[float] = [0.0]
+    for c in ordered_cases:
+        cid = str(c.get("case_id") or "")
+        ep = episodes_by_case_id.get(cid) or {}
+        pnl_usdt, pnl_pct = _episode_pnl(ep)
+        if pnl_usdt is None and pnl_pct is None:
+            continue
+        n_with_outcome += 1
+        if pnl_pct is not None:
+            pnl_pcts.append(float(pnl_pct))
+            if pnl_pct > 0:
+                wins += 1
+            elif pnl_pct < 0:
+                losses += 1
+        elif pnl_usdt is not None:
+            if pnl_usdt > 0:
+                wins += 1
+            elif pnl_usdt < 0:
+                losses += 1
+        if pnl_usdt is not None:
+            pnl_usdts.append(float(pnl_usdt))
+            cum += float(pnl_usdt)
+            equity_curve.append(cum)
+
+    denom = wins + losses
+    win_rate = (float(wins) / float(denom)) if denom > 0 else 0.0
+    avg_pnl_usdt = (sum(pnl_usdts) / len(pnl_usdts)) if pnl_usdts else None
+    avg_pnl_pct = (sum(pnl_pcts) / len(pnl_pcts)) if pnl_pcts else None
+    gross_win = sum(x for x in pnl_usdts if x > 0)
+    gross_loss = abs(sum(x for x in pnl_usdts if x < 0))
+    profit_factor = (gross_win / gross_loss) if gross_loss > 0 else None
+    mdd = _compute_max_drawdown(equity_curve) if pnl_usdts else None
+
+    return {
+        "n_cases": len(cases),
+        "n_with_outcome": n_with_outcome,
+        "wins": wins,
+        "losses": losses,
+        "win_rate": round(float(win_rate), 4),
+        "avg_pnl_usdt": round(float(avg_pnl_usdt), 4) if avg_pnl_usdt is not None else None,
+        "avg_pnl_pct": round(float(avg_pnl_pct), 4) if avg_pnl_pct is not None else None,
+        "profit_factor": round(float(profit_factor), 4) if profit_factor is not None else None,
+        "max_drawdown": round(float(mdd), 4) if mdd is not None else None,
+    }
