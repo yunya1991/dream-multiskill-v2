@@ -17,6 +17,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: trading-a8-governance-${{ github.ref }}
   cancel-in-progress: false
@@ -75,4 +78,3 @@ jobs:
           name: trading-a8-governance-${{ github.run_id }}
           path: artifacts/trading/*.json
           if-no-files-found: error
-

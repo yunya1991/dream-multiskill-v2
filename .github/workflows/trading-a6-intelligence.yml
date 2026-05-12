@@ -21,6 +21,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: trading-a6-intelligence-${{ github.ref }}
   cancel-in-progress: false
@@ -130,4 +133,3 @@ jobs:
           name: trading-a6-intelligence-${{ github.run_id }}
           path: artifacts/trading/*.json
           if-no-files-found: error
-
