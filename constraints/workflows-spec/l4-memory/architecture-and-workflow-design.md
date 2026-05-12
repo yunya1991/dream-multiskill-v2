@@ -1,9 +1,9 @@
 # L4记忆工程架构规范（约束层）
 
-Date: 2026-05-12  
-Status: Active Baseline (Constraint Layer)  
-Type: 顶层工程设计在约束层的正式落地镜像  
-Upstream Canonical: `docs/superpowers/specs/2026-05-12-l4-memory-architecture-and-workflow-design.md`
+Date: 2026-05-12
+Status: Active Baseline (Constraint Layer)
+Type: 顶层工程设计在约束层的正式落地镜像
+Upstream Canonical: `docs/superpowers/plans/2026-05-12-l4-memory-architecture-upgrade.md`
 
 ## 1. 规范定位
 
@@ -11,7 +11,8 @@ Upstream Canonical: `docs/superpowers/specs/2026-05-12-l4-memory-architecture-an
 
 主从关系：
 
-- 顶层设计（主）：`docs/superpowers/specs/2026-05-12-l4-memory-architecture-and-workflow-design.md`
+- 顶层设计（主）：`docs/superpowers/plans/2026-05-12-l4-memory-architecture-upgrade.md`
+- 补充规范：`docs/superpowers/specs/2026-05-12-l4-memory-architecture-and-workflow-design.md`
 - 约束镜像（从）：`constraints/workflows-spec/l4-memory/architecture-and-workflow-design.md`
 
 ## 2. 强制约束
@@ -28,6 +29,7 @@ Upstream Canonical: `docs/superpowers/specs/2026-05-12-l4-memory-architecture-an
 - `thinking_chain[]`
 - `evidence_chain[]`
 - `decision_outcome`
+- `l4_status`
 
 兼容策略：保留旧字段（如 `plan.steps`）读取，新字段先可选后强约束。
 
@@ -76,24 +78,51 @@ Upstream Canonical: `docs/superpowers/specs/2026-05-12-l4-memory-architecture-an
 
 ## 5. 顶层到实现映射
 
-- 入口层：`workflows/memory/L1~L4_archive/entrypoint.py`
-- 编排层：`workflows/memory/memory_engine/`
-- L4 脚本：`scripts/memory_l4/`
+| 层级 | 路径 | 职责 |
+|---|---|---|
+| 顶层设计 | `docs/superpowers/plans/2026-05-12-l4-memory-architecture-upgrade.md` | 完整架构方案 |
+| 约束层 | `constraints/workflows-spec/l4-memory/` | 可执行条款 + 验收清单 |
+| Schema | `.workbuddy/memory_l4/schemas/` | 数据契约 JSON Schema |
+| 入口层 | `workflows/memory/L1~L4_archive/entrypoint.py` | 薄封装 |
+| 编排层 | `workflows/memory/memory_engine/` | 核心编排 |
+| 实现层 | `scripts/memory_l4/` | 具体模块实现 |
 
-目标能力（允许分阶段落地）：
+已实现的工程模块：
 
-- `review_engine`
-- `a7_a8_adapter`
-- `thinking_chain_index_extension`
+- `case_registry.py` — TradeCase 注册（支持 v0.2 字段初始化）
+- `a0a9_bridge.py` — A0-A9 阶段数据桥接（含 `l4_status` + `decision_outcome`）
+- `review_engine.py` — 对错双向复盘
+- `a7a8_bridge.py` — A7/A8 报告桥接
+- `distill_engine.py` — 11步流程 + 三问蒸馏
+- `index_builder.py` — 索引构建（含思维链特征）
+- `query_similar.py` — 相似检索（含 L1 实时接口）
+- `stats_engine.py` — 统计快照（含 event_library + evolution_metrics）
+- `pipeline.py` — M0→M4 全流程编排器
+- `distill_template.py` — 蒸馏模板（兼容 CLI）
+- `quadrant_migrator.py` — 四象限迁移
+- `failure_analyzer.py` — 失败分析（将并入 review_engine）
+- `dashboard_renderer.py` — 仪表盘渲染
+- `shared_memory_bus.py` — JSONL 事件总线
+- `memory_graph.py` — Agent-记忆关系图
+- `meta_learning_tasks.py` — 元学习任务调度
+- `migration_mapper.py` — 跨市场迁移映射
+
+目标能力（分阶段落地）：
+
+- `review_engine` — P2 完成
+- `a7_a8_adapter` — P2 完成
+- `thinking_chain_index_extension` — P1 完成
+- `semantic_index` — P3
 
 ## 6. 阶段路线
 
-- P0：契约固化
-- P1：链路打通
-- P2：演化强化
-- P3：认知强化
+- P0：契约固化（Schema + 状态机 + 失败语义）
+- P1：链路打通（事件入库 → 复盘 → 蒸馏 → 统计 → 候选）
+- P2：演化强化（动态演化 + evolution 门禁联动）
+- P3：认知强化（语义索引 + 知识源扩展）
 
 ## 7. 维护规则
 
 - 任何字段/状态机变更必须同步本文件与顶层设计文档。
 - 新增 L4 规范必须更新 `constraints/workflows-spec/l4-memory/README.md` 与上层索引。
+- Schema 版本升级（v0.1 → v0.2）必须保持向后兼容。

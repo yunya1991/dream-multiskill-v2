@@ -4,7 +4,8 @@
 
 ## 顶层工程规范映射
 
-- 顶层工程设计（主）：`docs/superpowers/specs/2026-05-12-l4-memory-architecture-and-workflow-design.md`
+- 顶层工程设计（主）：`docs/superpowers/plans/2026-05-12-l4-memory-architecture-upgrade.md`
+- 补充规范：`docs/superpowers/specs/2026-05-12-l4-memory-architecture-and-workflow-design.md`
 - 约束层架构规范（从）：`constraints/workflows-spec/l4-memory/architecture-and-workflow-design.md`
 
 执行原则：

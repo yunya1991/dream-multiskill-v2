@@ -134,3 +134,14 @@ P0 执行文档：
 - `2026-05-12`：进入 P2 审批流绑定，新增 approval ticket fail-closed 门禁与审计产物规范。
 - `2026-05-12`：补全 P2 运营自动化（评分、版本看板、自动回滚执行器、周/月治理报表）并接入 workflow。
 - `2026-05-12`：完成 P2 缺口收口：周/月报调度路由修复、release snapshot 基线、推荐 workflow 拆分落地、默认绿路 smoke 校验。
+
+## 与L4记忆架构联动
+
+- L4 架构规范基线：`constraints/workflows-spec/l4-memory/architecture-and-workflow-design.md`
+- 顶层工程设计：`docs/superpowers/plans/2026-05-12-l4-memory-architecture-upgrade.md`
+
+强制约束：
+
+- 进化候选必须来源于 `memory -> evolution -> constraints` 主链。
+- 任一验证门禁失败必须 fail-closed，且保留可追溯 evidence。
+- L4 输出的候选记录必须携带 `l4_status`、`review_record_id`、`distill_id` 等可追溯字段。
