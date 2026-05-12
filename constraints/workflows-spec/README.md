@@ -1,6 +1,9 @@
 # 工作流规范索引
 
 - `memory.md`：记忆工作流规范
+- `l4-memory/README.md`：L4 记忆规范目录（集中治理入口）
+- `l4-memory/architecture-and-workflow-design.md`：L4 记忆工程架构规范（约束层基线）
+- `l4-memory/acceptance-checklist.md`：L4 约束验收清单（`skeleton-ready` / `production-ready`）
 - `trading.md`：交易决策工作流规范
 - `governance.md`：治理工作流规范
 - `knowledge.md`：知识库管理工作流规范
@@ -27,3 +30,9 @@
 - `skill-inventory-checklist.md`（2026-05-11 更新）：基线技能覆盖率审计（47/47）与重要级分层状态
 - `a0-a9-tooling-audit-2026-05-11.md`：A0-A9 完整闭环相关工具核查（入口/技能/记忆/门禁）
 - `a0-a9-system-level-implementation-checklist.md`：A0-A9 协议与三大闭环系统级实现清单（P0/P1/P2）
+
+## 顶层到约束映射
+
+- 顶层工程设计（主）：`docs/superpowers/specs/2026-05-12-l4-memory-architecture-and-workflow-design.md`
+- 约束层规范（从）：`constraints/workflows-spec/l4-memory/architecture-and-workflow-design.md`
+- 运行契约入口：`constraints/workflows-spec/memory.md`
