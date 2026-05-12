@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 import sys
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 _ROOT = Path(__file__).resolve().parents[2]
 if str(_ROOT) not in sys.path:
@@ -21,9 +21,13 @@ def create_case_from_episode_data(episode: Dict[str, Any], case_id: str) -> Dict
     inst_id = _require_nonempty(str(episode.get("inst_id") or ""), "inst_id")
     trace_id = _require_nonempty(str(episode.get("trace_id") or ""), "trace_id")
 
+    pnl = episode.get("pnl_pct")
+    pnl_usdt = episode.get("pnl_usdt")
+    dd = episode.get("drawdown")
+
     return {
         "case_id": case_id,
-        "version": "v0.1",
+        "version": "v0.2",
         "ts_start": ts,
         "ts_end": None,
         "inst_id": inst_id,
@@ -31,7 +35,23 @@ def create_case_from_episode_data(episode: Dict[str, Any], case_id: str) -> Dict
         "intent": {"question": "", "goal": "", "constraints": []},
         "investigation": {"summary": "", "sources": []},
         "theory_refs": [],
-        "environment_snapshot": {"regime": ""},
+        "environment_snapshot": {"regime": episode.get("regime", "")},
+        "thinking_chain": [],
+        "evidence_chain": {
+            "market_data_refs": [],
+            "signal_refs": [],
+            "strategy_refs": [],
+            "historical_refs": [],
+            "constraint_refs": []
+        },
+        "decision_outcome": {
+            "pnl_pct": float(pnl) if pnl is not None else None,
+            "pnl_usdt": float(pnl_usdt) if pnl_usdt is not None else None,
+            "drawdown": float(dd) if dd is not None else None,
+            "exit_reason": None,
+            "goal_achieved": None
+        },
+        "l4_status": "M0_CASE_REGISTERED",
         "plan": {
             "minimal_change": "",
             "max_future_space": "",
@@ -47,7 +67,10 @@ def create_case_from_episode_data(episode: Dict[str, Any], case_id: str) -> Dict
         "review": {
             "summary": "",
             "theory_practice_consistency": "partially_consistent",
-            "lessons": []
+            "lessons": [],
+            "mistakes": [],
+            "successes": [],
+            "review_record_id": None
         },
         "dream_reflection": None,
         "quadrant": {
@@ -111,6 +134,95 @@ def main() -> None:
 
     created = create_case_from_episode_file(episode_path, out_path=out_path)
     print(str(created))
+
+
+# ---------------------------------------------------------------------------
+# v0.2 field population helpers
+# ---------------------------------------------------------------------------
+
+def populate_thinking_chain(case_data: Dict[str, Any], stage_records: List[Dict[str, Any]]) -> None:
+    """将 A0-A9 阶段记录注入 thinking_chain。"""
+    chain = []
+    for sr in stage_records:
+        entry = {
+            "stage": sr.get("stage", "A0"),
+            "ts": sr.get("ts"),
+            "decision": sr.get("decision", ""),
+            "rationale": sr.get("rationale"),
+            "evidence_refs": sr.get("evidence_refs", []),
+        }
+        for optional_key in ("contradiction", "contradiction_analysis", "hypothesis",
+                             "test_result", "exit_logic", "stage_output_ref"):
+            val = sr.get(optional_key)
+            if val is not None:
+                entry[optional_key] = val
+        chain.append(entry)
+    case_data["thinking_chain"] = chain
+
+
+def populate_evidence_chain(case_data: Dict[str, Any], evidence: Dict[str, List[Any]]) -> None:
+    """注入证据链，仅覆盖提供的非空列表。"""
+    ec = case_data.get("evidence_chain") or {
+        "market_data_refs": [], "signal_refs": [],
+        "strategy_refs": [], "historical_refs": [], "constraint_refs": []
+    }
+    for key in ("market_data_refs", "signal_refs", "strategy_refs",
+                "historical_refs", "constraint_refs"):
+        if key in evidence and evidence[key]:
+            ec[key] = evidence[key]
+    case_data["evidence_chain"] = ec
+
+
+def populate_decision_outcome(case_data: Dict[str, Any], episode: Dict[str, Any]) -> None:
+    """从 episode 数据填充 decision_outcome。"""
+    do = case_data.get("decision_outcome") or {}
+    for key in ("pnl_pct", "pnl_usdt", "drawdown"):
+        v = episode.get(key)
+        if v is not None:
+            do[key] = float(v)
+    exit_reason = episode.get("exit_reason") or episode.get("exit_signal")
+    if exit_reason:
+        do["exit_reason"] = str(exit_reason)
+    goal = episode.get("goal_achieved")
+    if goal is not None:
+        do["goal_achieved"] = bool(goal)
+    case_data["decision_outcome"] = do
+
+
+def advance_l4_status(case_data: Dict[str, Any], new_status: str) -> None:
+    """推进 L4 状态机。"""
+    valid = {"M0_CASE_REGISTERED", "M1_REVIEW_COMPLETED", "M2_DISTILL_COMPLETED",
+             "M3_STATS_UPDATED", "M4_CANDIDATE_EMITTED", "M_FAIL"}
+    if new_status not in valid:
+        raise ValueError(f"invalid l4_status: {new_status}")
+    case_data["l4_status"] = new_status
+
+
+def upgrade_case_to_v02(case_data: Dict[str, Any]) -> Dict[str, Any]:
+    """将 v0.1 case 升级为 v0.2 格式（原地修改）。"""
+    if case_data.get("version") == "v0.2":
+        return case_data
+    case_data["version"] = "v0.2"
+    if "thinking_chain" not in case_data:
+        case_data["thinking_chain"] = []
+    if "evidence_chain" not in case_data:
+        case_data["evidence_chain"] = {
+            "market_data_refs": [], "signal_refs": [],
+            "strategy_refs": [], "historical_refs": [], "constraint_refs": []
+        }
+    if "decision_outcome" not in case_data:
+        case_data["decision_outcome"] = {
+            "pnl_pct": None, "pnl_usdt": None, "drawdown": None,
+            "exit_reason": None, "goal_achieved": None
+        }
+    if "l4_status" not in case_data:
+        case_data["l4_status"] = "M0_CASE_REGISTERED"
+    review = case_data.get("review") or {}
+    review.setdefault("mistakes", [])
+    review.setdefault("successes", [])
+    review.setdefault("review_record_id", None)
+    case_data["review"] = review
+    return case_data
 
 
 if __name__ == "__main__":

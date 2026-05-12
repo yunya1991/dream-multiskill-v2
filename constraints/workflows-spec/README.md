@@ -36,6 +36,7 @@
 
 ## 顶层到约束映射
 
-- 顶层工程设计（主）：`docs/superpowers/specs/2026-05-12-l4-memory-architecture-and-workflow-design.md`
+- 顶层工程设计（主）：`docs/superpowers/plans/2026-05-12-l4-memory-architecture-upgrade.md`
+- 补充规范：`docs/superpowers/specs/2026-05-12-l4-memory-architecture-and-workflow-design.md`
 - 约束层规范（从）：`constraints/workflows-spec/l4-memory/architecture-and-workflow-design.md`
 - 运行契约入口：`constraints/workflows-spec/memory.md`
