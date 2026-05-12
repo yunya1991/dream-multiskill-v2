@@ -1,0 +1,98 @@
+name: Trading A4 Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_drawdown_pct:
+        description: "Max drawdown percent"
+        required: false
+        default: "1.2"
+      position_ratio:
+        description: "Position ratio (0-1)"
+        required: false
+        default: "0.25"
+      stop_loss_pct:
+        description: "Stop loss percent"
+        required: false
+        default: "1.5"
+      run_a5_on_pass:
+        description: "Run A5 if risk_gate == PASS"
+        required: false
+        default: "true"
+  schedule:
+    - cron: "0 */4 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trading-a4-validation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  a4:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run A4 (and A5 when PASS)
+        run: |
+          python - <<'PY'
+          import importlib.util
+          import os
+          from pathlib import Path
+
+          root = Path.cwd()
+          trace_id = f"trade-{os.environ.get('GITHUB_RUN_ID','local')}"
+
+          def load(path: Path, name: str):
+              spec = importlib.util.spec_from_file_location(name, path)
+              module = importlib.util.module_from_spec(spec)
+              assert spec and spec.loader
+              spec.loader.exec_module(module)
+              return module
+
+          a4 = load(root / "workflows" / "trading-decision" / "A4_validation" / "entrypoint.py", "a4_entry")
+          a5 = load(root / "workflows" / "trading-decision" / "A5_execution" / "entrypoint.py", "a5_entry")
+
+          max_dd = float("""${{ github.event.inputs.max_drawdown_pct || '' }}""".strip() or "1.2")
+          pos_ratio = float("""${{ github.event.inputs.position_ratio || '' }}""".strip() or "0.25")
+          stop_loss = float("""${{ github.event.inputs.stop_loss_pct || '' }}""".strip() or "1.5")
+          run_a5 = ("""${{ github.event.inputs.run_a5_on_pass || '' }}""".strip() or "true").lower() == "true"
+
+          out_dir = root / "artifacts" / "trading"
+          out_dir.mkdir(parents=True, exist_ok=True)
+
+          payload = {
+              "trace_id": trace_id,
+              "max_drawdown_pct": max_dd,
+              "position_ratio": pos_ratio,
+              "stop_loss_pct": stop_loss,
+              "direction": "LONG",
+              "entry_price": 65000,
+              "leverage": 2,
+          }
+
+          a4_out = a4.run_a4_validation(payload, output_dir=out_dir)
+          a4_payload = a4_out.get("payload", {})
+          print("trace_id:", trace_id)
+          print("A4 risk_gate:", a4_payload.get("risk_gate"))
+
+          if run_a5 and a4_payload.get("risk_gate") == "PASS":
+              a5_out = a5.run_a5_execution({**payload, **a4_payload}, output_dir=out_dir)
+              print("A5 header:", a5_out.get("header", {}))
+          PY
+
+      - name: Upload trading artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trading-a4-validation-${{ github.run_id }}
+          path: artifacts/trading/*.json
+          if-no-files-found: error
+

@@ -1,0 +1,98 @@
+name: Trading A5 Execution
+
+on:
+  workflow_dispatch:
+    inputs:
+      direction:
+        description: "Direction LONG/SHORT"
+        required: false
+        default: "LONG"
+      entry_price:
+        description: "Entry price"
+        required: false
+        default: "65000"
+      leverage:
+        description: "Leverage"
+        required: false
+        default: "2"
+  schedule:
+    - cron: "0 */8 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trading-a5-execution-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  a5:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run A5 (and notify A6)
+        run: |
+          python - <<'PY'
+          import importlib.util
+          import os
+          from pathlib import Path
+
+          root = Path.cwd()
+          trace_id = f"trade-{os.environ.get('GITHUB_RUN_ID','local')}"
+
+          def load(path: Path, name: str):
+              spec = importlib.util.spec_from_file_location(name, path)
+              module = importlib.util.module_from_spec(spec)
+              assert spec and spec.loader
+              spec.loader.exec_module(module)
+              return module
+
+          a5 = load(root / "workflows" / "trading-decision" / "A5_execution" / "entrypoint.py", "a5_entry")
+          a6 = load(root / "workflows" / "trading-decision" / "A6_intelligence" / "entrypoint.py", "a6_entry")
+
+          direction = ("""${{ github.event.inputs.direction || '' }}""".strip() or "LONG").upper()
+          entry_price = float("""${{ github.event.inputs.entry_price || '' }}""".strip() or "65000")
+          leverage = int("""${{ github.event.inputs.leverage || '' }}""".strip() or "2")
+
+          out_dir = root / "artifacts" / "trading"
+          out_dir.mkdir(parents=True, exist_ok=True)
+
+          payload = {
+              "trace_id": trace_id,
+              "direction": direction,
+              "entry_price": entry_price,
+              "leverage": leverage,
+          }
+
+          a5_out = a5.run_a5_execution(payload, output_dir=out_dir)
+          a6_in = {
+              "trace_id": trace_id,
+              "alerts": [
+                  {
+                      "risk_score": 0.0,
+                      "regime_change": False,
+                      "theory_practice_score": 1.0,
+                  }
+              ],
+              "signal_shift": 0.0,
+          }
+          a6_out = a6.run_a6_intelligence(a6_in, output_dir=out_dir)
+          print("trace_id:", trace_id)
+          print("A5 header:", a5_out.get("header", {}))
+          print("A6 route_summary:", a6_out.get("payload", {}).get("route_summary", {}))
+          PY
+
+      - name: Upload trading artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trading-a5-execution-${{ github.run_id }}
+          path: artifacts/trading/*.json
+          if-no-files-found: error
+

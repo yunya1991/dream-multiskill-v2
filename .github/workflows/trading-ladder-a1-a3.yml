@@ -1,0 +1,91 @@
+name: Trading Ladder A1-A3
+
+on:
+  workflow_dispatch:
+    inputs:
+      signals_json:
+        description: 'JSON array of signals, e.g. ["macro"]'
+        required: false
+        default: '["macro"]'
+      confidence:
+        description: "A1 confidence (0-1)"
+        required: false
+        default: "0.8"
+  schedule:
+    - cron: "0 16 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trading-ladder-a1-a3-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ladder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run A1 -> A2 -> A3 ladder
+        run: |
+          python - <<'PY'
+          import importlib.util
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path.cwd()
+          trace_id = f"trade-{os.environ.get('GITHUB_RUN_ID','local')}"
+
+          def load(path: Path, name: str):
+              spec = importlib.util.spec_from_file_location(name, path)
+              module = importlib.util.module_from_spec(spec)
+              assert spec and spec.loader
+              spec.loader.exec_module(module)
+              return module
+
+          a1 = load(root / "workflows" / "trading-decision" / "A1_research" / "entrypoint.py", "a1_entry")
+          a2 = load(root / "workflows" / "trading-decision" / "A2_first-principles" / "entrypoint.py", "a2_entry")
+          a3 = load(root / "workflows" / "trading-decision" / "A3_simulation" / "entrypoint.py", "a3_entry")
+
+          signals_json = """${{ github.event.inputs.signals_json || '' }}""".strip() or '["macro"]'
+          confidence = float("""${{ github.event.inputs.confidence || '' }}""".strip() or "0.8")
+
+          payload = {
+              "trace_id": trace_id,
+              "signals": json.loads(signals_json),
+              "confidence": confidence,
+              "rsi": 52,
+              "funding_rate": 0.0,
+              "fgi": 55,
+              "signal_score": 62,
+              "volatility": 0.02,
+              "market_regime": "trend",
+          }
+
+          out_dir = root / "artifacts" / "trading"
+          out_dir.mkdir(parents=True, exist_ok=True)
+
+          a1_out = a1.run_a1_research(payload, output_dir=out_dir)
+          a2_out = a2.run_a2_first_principles({**payload, **a1_out.get("payload", {})}, output_dir=out_dir)
+          a3_out = a3.run_a3_simulation({**payload, **a2_out.get("payload", {})}, output_dir=out_dir)
+          print("trace_id:", trace_id)
+          print("A1 header:", a1_out.get("header", {}))
+          print("A2 header:", a2_out.get("header", {}))
+          print("A3 header:", a3_out.get("header", {}))
+          PY
+
+      - name: Upload trading artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trading-ladder-a1-a3-${{ github.run_id }}
+          path: artifacts/trading/*.json
+          if-no-files-found: error
+

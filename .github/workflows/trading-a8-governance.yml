@@ -1,0 +1,78 @@
+name: Trading A8 Governance
+
+on:
+  workflow_dispatch:
+    inputs:
+      hypothesis_score:
+        description: "A8 hypothesis_score"
+        required: false
+        default: "0.8"
+      practice_score:
+        description: "A8 practice_score"
+        required: false
+        default: "0.8"
+  schedule:
+    - cron: "0 6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trading-a8-governance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  gov:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run governance loop A7 -> A8 -> A1/A2/A3
+        run: |
+          python - <<'PY'
+          import importlib.util
+          import os
+          from pathlib import Path
+
+          root = Path.cwd()
+          trace_id = f"trade-{os.environ.get('GITHUB_RUN_ID','local')}"
+
+          def load(path: Path, name: str):
+              spec = importlib.util.spec_from_file_location(name, path)
+              module = importlib.util.module_from_spec(spec)
+              assert spec and spec.loader
+              spec.loader.exec_module(module)
+              return module
+
+          gov = load(root / "workflows" / "trading-decision" / "orchestrator" / "governance_loop.py", "gov_loop")
+
+          out_dir = root / "artifacts" / "trading"
+          out_dir.mkdir(parents=True, exist_ok=True)
+
+          hypothesis_score = float("""${{ github.event.inputs.hypothesis_score || '' }}""".strip() or "0.8")
+          practice_score = float("""${{ github.event.inputs.practice_score || '' }}""".strip() or "0.8")
+
+          payload = {
+              "trace_id": trace_id,
+              "hypothesis_score": hypothesis_score,
+              "practice_score": practice_score,
+          }
+          out = gov.run_governance_loop(payload, output_dir=out_dir)
+          print("trace_id:", trace_id)
+          print("visited:", out.get("visited_stages"))
+          print("reputation:", out.get("reputation"))
+          PY
+
+      - name: Upload trading artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trading-a8-governance-${{ github.run_id }}
+          path: artifacts/trading/*.json
+          if-no-files-found: error
+
