@@ -25,7 +25,7 @@
 - `evolution-p2-ops-automation-spec-v0.1.md`：P2 运营自动化规范（评分/看板/自动回滚/周期报表）
 - `evolution.md`（2026-05-12 追加）：补齐推荐 workflow 拆分与默认 smoke 验收路径
 - `communication-contract-v0.1.md`：三层通信调用与闭环升级契约
-- `trading-communication-protocol-v2.md`：A0-A9 通信协议与定时驱动架构（v2.1，2026-05-12 更新：A0 集成化 + 治理环重构 + 定时调度）
+- `trading-communication-protocol-v2.md`：A0-A9 通信协议与定时驱动架构（v2.1，2026-05-12 更新：A0 集成化 + 治理环重构 + 定时调度；P1 追加：传输层对接 HTTP + Redis Streams）
 - `memory.md`（2026-05-10 更新）：新增 L1~L4 显式入口映射与 `MemoryEngine` 调用对齐约定
 - `trading.md`（2026-05-10 更新）：新增 A0-A9 显式入口映射与三批技能迁移清单
 - `a0-a9-fullchain-checklist.md`：A0-A9 全链路迁移对照清单（源仓 vs 本地仓）

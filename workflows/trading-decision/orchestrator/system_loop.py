@@ -28,9 +28,12 @@ def _default_runners():
 def _ship_messages(transport, messages):
     sent = 0
     for message in messages:
-        header = message.get("header") or {}
-        channel = str(header.get("loop_type") or "execution")
-        transport.send(channel, message)
+        if hasattr(transport, "send_envelope"):
+            transport.send_envelope(message)
+        else:
+            header = message.get("header") or {}
+            channel = str(header.get("loop_type") or "execution")
+            transport.send(channel, message)
         sent += 1
     return sent
 
@@ -77,6 +80,11 @@ def run_system_loop(
     intelligence_runner: Optional[LoopRunner] = None,
     governance_runner: Optional[LoopRunner] = None,
 ) -> Dict[str, Any]:
+    if transport is None:
+        root = Path(__file__).resolve().parents[1]
+        mod = _load_module(root / "transports" / "adapters.py", "trading_transports_adapters")
+        transport = mod.build_default_transport_router()
+
     default_execution, default_intelligence, default_governance = _default_runners()
     run_execution = execution_runner or default_execution
     run_intelligence = intelligence_runner or default_intelligence
