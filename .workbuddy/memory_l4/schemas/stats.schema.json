@@ -1,13 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "MemoryL4Stats",
+  "description": "StatsSnapshot v0.2 — 四象限统计快照，新增 event_library、category、severity 过滤维度与演化指标",
   "type": "object",
   "additionalProperties": true,
   "required": ["snapshot_ts", "points"],
   "properties": {
     "version": {
       "type": "string",
-      "default": "v0.1"
+      "default": "v0.2"
     },
     "snapshot_ts": {
       "type": "string",
@@ -32,7 +33,44 @@
     "aggregations": {
       "type": "object",
       "additionalProperties": true,
-      "description": "按 inst_id / regime / tag 等维度的聚合结果"
+      "description": "按 inst_id / regime / category / severity 等维度的聚合结果"
+    },
+    "event_library": {
+      "type": "object",
+      "description": "四象限静态事件库，按 (regime, category, x_range, y_range) 四维索引",
+      "additionalProperties": false,
+      "properties": {
+        "total_events": { "type": "integer", "minimum": 0 },
+        "by_regime": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "{regime: count}"
+        },
+        "by_category": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "{category: count}"
+        },
+        "quadrant_density": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "{x_range_y_range: count}"
+        }
+      }
+    },
+    "evolution_metrics": {
+      "type": "object",
+      "description": "演化指标：蒸馏记录的 y 轴演化速率、稳定性",
+      "additionalProperties": false,
+      "properties": {
+        "y_growth_rate": { "type": ["number", "null"], "description": "y 轴平均增长率" },
+        "pattern_stability": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "emerging_patterns": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/emerging_pattern" },
+          "default": []
+        }
+      }
     },
     "migration_trends": {
       "type": "array",
@@ -52,6 +90,8 @@
         "y": { "type": "number", "minimum": 0, "maximum": 1 },
         "inst_id": { "type": ["string", "null"] },
         "regime": { "type": ["string", "null"] },
+        "category": { "type": ["string", "null"], "description": "交易类型：trend/reversal/arbitrage" },
+        "severity": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "影响程度" },
         "tags": {
           "type": "array",
           "items": { "type": "string" },
@@ -80,6 +120,25 @@
       "properties": {
         "ts": { "type": "string" },
         "y": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "emerging_pattern": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cluster_center", "maturity_score"],
+      "properties": {
+        "cluster_center": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y"],
+          "properties": {
+            "x": { "type": "number", "minimum": -1, "maximum": 1 },
+            "y": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "maturity_score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "case_count": { "type": "integer", "minimum": 0 },
+        "consistency": { "type": "number", "minimum": 0, "maximum": 1 }
       }
     }
   }

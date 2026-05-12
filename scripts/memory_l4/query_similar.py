@@ -375,6 +375,79 @@ def get_decision_outcome(case_id: str) -> Dict[str, Any]:
     raise KeyError(f"case_id not found: {case_id}")
 
 
+def query_by_tags(tags: List[str], topk: int = 20) -> Dict[str, Any]:
+    """按标签检索案例 (v0.2 新增，设计文档 5.5)。"""
+    cases = _load_all_cases()
+    matched = []
+    tag_set = set(tags)
+    for c in cases:
+        case_tags = set(c.get("tags") or [])
+        if tag_set & case_tags:  # intersection
+            matched.append({
+                "case_id": c.get("case_id"),
+                "inst_id": c.get("inst_id"),
+                "tags": list(tag_set & case_tags),
+                "regime": (c.get("environment_snapshot") or {}).get("regime"),
+                "pnl_pct": (c.get("decision_outcome") or {}).get("pnl_pct"),
+                "l4_status": c.get("l4_status"),
+                "quadrant_x": (c.get("quadrant") or {}).get("x"),
+                "quadrant_y": (c.get("quadrant") or {}).get("y"),
+            })
+    matched.sort(key=lambda x: abs(x.get("quadrant_x") or 0), reverse=True)
+    return {"tags": tags, "total": len(matched), "cases": matched[:topk]}
+
+
+def query_library(
+    regime: str = None,
+    category: str = None,
+    min_x: float = -1.0,
+    max_x: float = 1.0,
+    min_y: float = 0.0,
+    max_y: float = 1.0,
+    topk: int = 50,
+) -> Dict[str, Any]:
+    """四象限事件库查询 (v0.2 新增，设计文档 5.5)。
+
+    按 regime + category + 象限范围过滤，用于 A0-A9 决策参考。
+    """
+    cases = _load_all_cases()
+    matched = []
+    for c in cases:
+        # regime 过滤
+        if regime:
+            env = c.get("environment_snapshot") or {}
+            if env.get("regime") != regime:
+                continue
+        # category 过滤 (从 tags 推断)
+        if category:
+            tags = c.get("tags") or []
+            if not any(category in str(t) for t in tags):
+                continue
+        # 象限范围
+        q = c.get("quadrant") or {}
+        x = q.get("x", 0)
+        y = q.get("y", 0)
+        if x < min_x or x > max_x or y < min_y or y > max_y:
+            continue
+        matched.append({
+            "case_id": c.get("case_id"),
+            "inst_id": c.get("inst_id"),
+            "regime": (c.get("environment_snapshot") or {}).get("regime"),
+            "category": next((t for t in (c.get("tags") or []) if category and category in str(t)), None),
+            "x": x,
+            "y": y,
+            "pnl_pct": (c.get("decision_outcome") or {}).get("pnl_pct"),
+            "thinking_chain_length": len(c.get("thinking_chain") or []),
+            "l4_status": c.get("l4_status"),
+        })
+    matched.sort(key=lambda r: (r.get("y") or 0) * (abs(r.get("x") or 0) + 1), reverse=True)
+    return {
+        "filters": {"regime": regime, "category": category, "x_range": [min_x, max_x], "y_range": [min_y, max_y]},
+        "total": len(matched),
+        "cases": matched[:topk],
+    }
+
+
 def _stage_coverage(chain: List[Dict[str, Any]]) -> Dict[str, Any]:
     """统计 thinking_chain 覆盖的 A0-A9 阶段。"""
     stages_present = set()
