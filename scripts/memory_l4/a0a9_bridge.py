@@ -247,8 +247,6 @@ def query_memory_for_stage(
     Returns:
         历史参考案例列表，每个包含 case_id, thinking_stage, quadrant
     """
-    from scripts.memory_l4.query_similar import load_index_data
-
     cases_dir = memory_l4_cases_dir()
     if not cases_dir.exists():
         return []

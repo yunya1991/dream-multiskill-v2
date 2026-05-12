@@ -39,8 +39,12 @@ def _list_json(dir_path: Path) -> List[Path]:
 
 def _extract_pnl(episode: Dict[str, Any]) -> Tuple[Optional[float], Optional[float]]:
     out = episode.get("outcome") or {}
-    pnl_pct = out.get("realized_pnl_pct") or out.get("unrealized_pnl_pct")
-    pnl_usdt = out.get("realized_pnl_usdt") or out.get("unrealized_pnl_usdt")
+    pnl_pct = out.get("realized_pnl_pct")
+    if pnl_pct is None:
+        pnl_pct = out.get("unrealized_pnl_pct")
+    pnl_usdt = out.get("realized_pnl_usdt")
+    if pnl_usdt is None:
+        pnl_usdt = out.get("unrealized_pnl_usdt")
     return (
         float(pnl_pct) if pnl_pct is not None else None,
         float(pnl_usdt) if pnl_usdt is not None else None,
