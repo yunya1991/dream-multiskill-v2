@@ -2,6 +2,16 @@
 
 定义反馈、审计、沙箱和回滚机制。
 
+## 与L4记忆架构联动
+
+- L4 架构规范基线：`constraints/workflows-spec/l4-memory/architecture-and-workflow-design.md`
+- 顶层工程设计：`docs/superpowers/specs/2026-05-12-l4-memory-architecture-and-workflow-design.md`
+
+强制约束：
+
+- 进化候选必须来源于 `memory -> evolution -> constraints` 主链。
+- 任一验证门禁失败必须 fail-closed，且保留可追溯 evidence。
+
 ## 1. 工程部规范定位
 
 本规范用于将“记忆驱动进化闭环”固化到约束层工作流规范中，作为进化工作流的工程实施基线。
