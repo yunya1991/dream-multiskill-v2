@@ -1,0 +1,133 @@
+name: Trading A6 Intelligence
+
+on:
+  workflow_dispatch:
+    inputs:
+      risk_score:
+        description: "risk_score (0-1), drives L0/L1/L2"
+        required: false
+        default: "0.0"
+      regime_change:
+        description: "true/false, drives L1.5"
+        required: false
+        default: "false"
+      theory_practice_score:
+        description: "drives L3 when < 0.7"
+        required: false
+        default: "1.0"
+  schedule:
+    - cron: "0 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trading-a6-intelligence-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  a6:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run A6 and execute routed stages in same run
+        run: |
+          python - <<'PY'
+          import importlib.util
+          import os
+          from pathlib import Path
+
+          root = Path.cwd()
+          trace_id = f"trade-{os.environ.get('GITHUB_RUN_ID','local')}"
+
+          def load(path: Path, name: str):
+              spec = importlib.util.spec_from_file_location(name, path)
+              module = importlib.util.module_from_spec(spec)
+              assert spec and spec.loader
+              spec.loader.exec_module(module)
+              return module
+
+          a1 = load(root / "workflows" / "trading-decision" / "A1_research" / "entrypoint.py", "a1_entry")
+          a2 = load(root / "workflows" / "trading-decision" / "A2_first-principles" / "entrypoint.py", "a2_entry")
+          a3 = load(root / "workflows" / "trading-decision" / "A3_simulation" / "entrypoint.py", "a3_entry")
+          a4 = load(root / "workflows" / "trading-decision" / "A4_validation" / "entrypoint.py", "a4_entry")
+          a5 = load(root / "workflows" / "trading-decision" / "A5_execution" / "entrypoint.py", "a5_entry")
+          a6 = load(root / "workflows" / "trading-decision" / "A6_intelligence" / "entrypoint.py", "a6_entry")
+          a9 = load(root / "workflows" / "trading-decision" / "A9_exit" / "entrypoint.py", "a9_entry")
+
+          out_dir = root / "artifacts" / "trading"
+          out_dir.mkdir(parents=True, exist_ok=True)
+
+          risk_score = float("""${{ github.event.inputs.risk_score || '' }}""".strip() or "0.0")
+          regime_change = ("""${{ github.event.inputs.regime_change || '' }}""".strip() or "false").lower() == "true"
+          theory_practice_score = float("""${{ github.event.inputs.theory_practice_score || '' }}""".strip() or "1.0")
+
+          a6_in = {
+              "trace_id": trace_id,
+              "alerts": [
+                  {
+                      "risk_score": risk_score,
+                      "regime_change": regime_change,
+                      "theory_practice_score": theory_practice_score,
+                  }
+              ],
+              "signal_shift": 0.0,
+          }
+          a6_out = a6.run_a6_intelligence(a6_in, output_dir=out_dir)
+          routed = list(a6_out.get("payload", {}).get("routed_events", []))
+          print("trace_id:", trace_id)
+          print("route_summary:", a6_out.get("payload", {}).get("route_summary", {}))
+
+          base_payload = {
+              "trace_id": trace_id,
+              "signals": ["macro"],
+              "confidence": 0.8,
+              "rsi": 52,
+              "funding_rate": 0.0,
+              "fgi": 55,
+              "signal_score": 62,
+              "volatility": 0.02,
+              "market_regime": "trend",
+              "max_drawdown_pct": 1.2,
+              "position_ratio": 0.25,
+              "stop_loss_pct": 1.5,
+              "direction": "LONG",
+              "entry_price": 65000,
+              "leverage": 2,
+              "unrealized_pnl_pct": 1.0,
+              "risk_level": "low",
+          }
+
+          for msg in routed:
+              tgt = str((msg.get("header") or {}).get("target") or "")
+              if tgt == "A2":
+                  a2_out = a2.run_a2_first_principles(base_payload, output_dir=out_dir)
+                  a3.run_a3_simulation({**base_payload, **a2_out.get("payload", {})}, output_dir=out_dir)
+              elif tgt == "A4":
+                  a4_out = a4.run_a4_validation(base_payload, output_dir=out_dir)
+                  if a4_out.get("payload", {}).get("risk_gate") == "PASS":
+                      a5.run_a5_execution({**base_payload, **a4_out.get("payload", {})}, output_dir=out_dir)
+              elif tgt == "A9":
+                  a9.run_a9_exit(base_payload, output_dir=out_dir)
+              elif tgt == "A1":
+                  a1.run_a1_research(base_payload, output_dir=out_dir)
+              elif tgt == "A3":
+                  a3.run_a3_simulation(base_payload, output_dir=out_dir)
+              else:
+                  print("OBSERVE:", tgt)
+          PY
+
+      - name: Upload trading artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trading-a6-intelligence-${{ github.run_id }}
+          path: artifacts/trading/*.json
+          if-no-files-found: error
+
