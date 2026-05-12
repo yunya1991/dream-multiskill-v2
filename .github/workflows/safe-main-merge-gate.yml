@@ -66,6 +66,8 @@ jobs:
             tests/test_trading_redis_streams_p1.py \
             tests/test_trading_transport_router_p1.py \
             tests/test_trading_transports_p1.py \
+            tests/test_trading_demo_http_server_p1.py \
+            tests/test_trading_demo_redis_consumer_p1.py \
             tests/test_trading_governance_orchestrator_p1.py \
             tests/test_trading_system_loop_e2e_p1p2.py \
             tests/test_trading_replay_observability_p2.py \
