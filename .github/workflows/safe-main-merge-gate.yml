@@ -14,6 +14,9 @@ permissions:
   contents: read
   pull-requests: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   gate:
     name: PR Gate Checks
@@ -56,7 +59,8 @@ jobs:
 
       - name: Run trading system loop gate tests
         run: |
-          pytest tests/test_ci_trading_scheduler_workflows_p0.py \
+          pytest tests/test_ci_actions_node24_compat.py \
+            tests/test_ci_trading_scheduler_workflows_p0.py \
             tests/test_trading_protocol_fail_closed_p0.py \
             tests/test_trading_governance_orchestrator_p1.py \
             tests/test_trading_system_loop_e2e_p1p2.py \
