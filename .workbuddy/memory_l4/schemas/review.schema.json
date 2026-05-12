@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReviewRecord",
+  "description": "复盘记录 — L1 TradeCase 与 L4 Distill 之间的桥梁，对错双向分析",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "case_id",
+    "snapshot_ts",
+    "direction",
+    "mistakes",
+    "successes",
+    "theory_practice_analysis",
+    "quadrant"
+  ],
+  "properties": {
+    "review_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "格式: REV_{timestamp}_{case_id}"
+    },
+    "version": {
+      "type": "string",
+      "default": "v0.1"
+    },
+    "snapshot_ts": {
+      "type": "string",
+      "description": "复盘时间戳, ISO8601 with timezone"
+    },
+    "case_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "关联的 TradeCase"
+    },
+    "direction": {
+      "type": "string",
+      "enum": ["success", "failure", "mixed"],
+      "description": "分析方向"
+    },
+    "mistakes": {
+      "type": "array",
+      "description": "做错了什么，为什么错",
+      "items": { "$ref": "#/$defs/review_item" },
+      "default": []
+    },
+    "successes": {
+      "type": "array",
+      "description": "做对了什么，哪里对",
+      "items": { "$ref": "#/$defs/review_item" },
+      "default": []
+    },
+    "theory_practice_analysis": {
+      "type": "object",
+      "description": "A8 理论验证深度分析",
+      "additionalProperties": false,
+      "required": ["consistency_score"],
+      "properties": {
+        "consistency_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "理论与实践一致性评分"
+        },
+        "confirmed_theories": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/theory_link" },
+          "default": [],
+          "description": "被实践证实的理论"
+        },
+        "contradicted_theories": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/theory_link" },
+          "default": [],
+          "description": "被实践证伪的理论"
+        },
+        "gap_analysis": {
+          "type": ["string", "null"],
+          "description": "差距分析"
+        }
+      }
+    },
+    "distill_proposals": {
+      "type": "array",
+      "description": "蒸馏建议",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "claim", "confidence"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "benefit_experience",
+              "risk_signal",
+              "decision_heuristic",
+              "contradiction_pattern",
+              "exit_logic",
+              "theory_update"
+            ]
+          },
+          "claim": { "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      },
+      "default": []
+    },
+    "quadrant": { "$ref": "#/$defs/quadrant" },
+    "a7_report_ref": {
+      "type": ["string", "null"],
+      "description": "A7 实践理论报告文件路径"
+    },
+    "a8_report_ref": {
+      "type": ["string", "null"],
+      "description": "A8 理论验证报告文件路径"
+    }
+  },
+  "$defs": {
+    "review_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["what"],
+      "properties": {
+        "what": {
+          "type": "string",
+          "description": "做错了/对了什么"
+        },
+        "why": {
+          "type": ["string", "null"],
+          "description": "根因 (mistakes) / 理论依据 (successes)"
+        },
+        "severity": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "严重程度"
+        },
+        "stage_ref": {
+          "type": ["string", "null"],
+          "description": "关联 A0-A9 阶段: A0~A9"
+        },
+        "theory_gap": {
+          "type": ["string", "null"],
+          "description": "理论与实践的差距 (仅 mistakes)"
+        },
+        "reproducible": {
+          "type": ["boolean", "null"],
+          "description": "是否可复现 (仅 successes)"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "ref"],
+            "properties": {
+              "type": { "type": "string", "enum": ["repo_file", "url", "note"] },
+              "ref": { "type": "string" }
+            }
+          },
+          "default": []
+        }
+      }
+    },
+    "theory_link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["theory_name", "confidence"],
+      "properties": {
+        "theory_name": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "source_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "ref"],
+          "properties": {
+            "type": { "type": "string", "enum": ["repo_file", "url", "note"] },
+            "ref": { "type": "string" }
+          }
+        }
+      }
+    },
+    "quadrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "evidence"],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["weights", "y_perf", "y_consistency", "y_human"],
+          "properties": {
+            "weights": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["perf", "consistency", "human"],
+              "properties": {
+                "perf": { "type": "number", "const": 0.4 },
+                "consistency": { "type": "number", "const": 0.4 },
+                "human": { "type": "number", "const": 0.2 }
+              }
+            },
+            "y_perf": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y_consistency": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y_human": { "type": "number", "minimum": 0, "maximum": 1 },
+            "notes": { "type": "string", "default": "" }
+          }
+        }
+      }
+    }
+  }
+}

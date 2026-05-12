@@ -1,0 +1,333 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TradeCase",
+  "description": "TradeCase v0.2 — L1/L4 共享格式，新增 thinking_chain, evidence_chain, review 扩展",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "ts_start",
+    "inst_id",
+    "intent",
+    "investigation",
+    "theory_refs",
+    "environment_snapshot",
+    "thinking_chain",
+    "evidence_chain",
+    "plan",
+    "execution",
+    "review",
+    "quadrant"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "default": "v0.2"
+    },
+    "ts_start": {
+      "type": "string",
+      "description": "ISO8601 with timezone",
+      "minLength": 1
+    },
+    "ts_end": {
+      "type": ["string", "null"],
+      "description": "ISO8601 with timezone"
+    },
+    "inst_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["question", "goal"],
+      "properties": {
+        "question": { "type": "string" },
+        "goal": { "type": "string" },
+        "constraints": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    },
+    "investigation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "sources"],
+      "properties": {
+        "summary": { "type": "string" },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_ref" },
+          "default": []
+        }
+      }
+    },
+    "theory_refs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/source_ref" },
+      "default": []
+    },
+    "environment_snapshot": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["regime"],
+      "properties": {
+        "regime": { "type": "string" }
+      }
+    },
+    "thinking_chain": {
+      "type": "array",
+      "description": "A0-A9 完整思维链，仅记录实际执行过的阶段",
+      "items": { "$ref": "#/$defs/thinking_stage" },
+      "default": []
+    },
+    "evidence_chain": {
+      "type": "object",
+      "description": "完整决策证据链",
+      "additionalProperties": false,
+      "required": ["market_data_refs", "signal_refs", "strategy_refs", "historical_refs", "constraint_refs"],
+      "properties": {
+        "market_data_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_ref" },
+          "default": []
+        },
+        "signal_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_ref" },
+          "default": []
+        },
+        "strategy_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_ref" },
+          "default": []
+        },
+        "historical_refs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "指向其他 TradeCase case_id",
+          "default": []
+        },
+        "constraint_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_ref" },
+          "default": []
+        }
+      }
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimal_change", "max_future_space", "steps"],
+      "properties": {
+        "minimal_change": { "type": "string" },
+        "max_future_space": { "type": "string" },
+        "steps": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["episode_refs", "result"],
+      "properties": {
+        "episode_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/episode_ref" },
+          "default": []
+        },
+        "result": { "type": "string" }
+      }
+    },
+    "online_pressure_test": {
+      "type": ["object", "null"],
+      "additionalProperties": true
+    },
+    "rollout_monitoring": {
+      "type": ["object", "null"],
+      "additionalProperties": true
+    },
+    "backtest": {
+      "type": ["object", "null"],
+      "additionalProperties": true
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "theory_practice_consistency", "lessons"],
+      "properties": {
+        "summary": { "type": "string" },
+        "theory_practice_consistency": {
+          "type": "string",
+          "enum": ["consistent", "partially_consistent", "inconsistent"]
+        },
+        "lessons": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "mistakes": {
+          "type": "array",
+          "description": "做错了什么，为什么错",
+          "items": { "$ref": "#/$defs/review_item" },
+          "default": []
+        },
+        "successes": {
+          "type": "array",
+          "description": "做对了什么，哪里对",
+          "items": { "$ref": "#/$defs/review_item" },
+          "default": []
+        },
+        "review_record_id": {
+          "type": ["string", "null"],
+          "description": "指向 ReviewRecord 的引用"
+        }
+      }
+    },
+    "dream_reflection": {
+      "type": ["string", "null"]
+    },
+    "quadrant": { "$ref": "#/$defs/quadrant" }
+  },
+  "$defs": {
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "ref"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["repo_file", "url", "note"]
+        },
+        "ref": { "type": "string" }
+      }
+    },
+    "episode_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trace_id", "path"],
+      "properties": {
+        "trace_id": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    },
+    "thinking_stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "decision"],
+      "properties": {
+        "stage": {
+          "type": "string",
+          "enum": ["A0", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9"],
+          "description": "A0-A9 阶段标识"
+        },
+        "ts": {
+          "type": ["string", "null"],
+          "description": "该阶段时间戳"
+        },
+        "decision": {
+          "type": "string",
+          "description": "该阶段做出的决策"
+        },
+        "rationale": {
+          "type": ["string", "null"],
+          "description": "决策理由"
+        },
+        "contradiction": {
+          "type": ["string", "null"],
+          "description": "A0 专用: 识别到的矛盾"
+        },
+        "contradiction_analysis": {
+          "type": ["string", "null"],
+          "description": "A0/A8 专用: 矛盾分析"
+        },
+        "hypothesis": {
+          "type": ["string", "null"],
+          "description": "A3/A4 专用: 假设"
+        },
+        "test_result": {
+          "type": ["string", "null"],
+          "description": "A4/A8 专用: 测试结果"
+        },
+        "exit_logic": {
+          "type": ["string", "null"],
+          "description": "A9 专用: 离场逻辑"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_ref" },
+          "default": []
+        },
+        "stage_output_ref": {
+          "type": ["string", "null"],
+          "description": "该阶段产出文件引用"
+        }
+      }
+    },
+    "review_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["what"],
+      "properties": {
+        "what": { "type": "string", "description": "做错了/对了什么" },
+        "why": { "type": ["string", "null"], "description": "根因 (mistakes) / 理论依据 (successes)" },
+        "severity": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "严重程度" },
+        "stage_ref": { "type": ["string", "null"], "description": "关联 A0-A9 阶段" },
+        "theory_gap": { "type": ["string", "null"], "description": "理论与实践的差距 (仅 mistakes)" },
+        "reproducible": { "type": ["boolean", "null"], "description": "是否可复现 (仅 successes)" }
+      }
+    },
+    "quadrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "evidence"],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["weights", "y_perf", "y_consistency", "y_human"],
+          "properties": {
+            "weights": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["perf", "consistency", "human"],
+              "properties": {
+                "perf": { "type": "number", "const": 0.4 },
+                "consistency": { "type": "number", "const": 0.4 },
+                "human": { "type": "number", "const": 0.2 }
+              }
+            },
+            "y_perf": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y_consistency": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y_human": { "type": "number", "minimum": 0, "maximum": 1 },
+            "notes": { "type": "string", "default": "" }
+          }
+        }
+      }
+    }
+  }
+}

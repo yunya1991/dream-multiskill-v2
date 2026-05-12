@@ -1,0 +1,268 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Distill",
+  "description": "Distill v0.2 — 新增 what_is_it, why_it_works, how_to_apply, process_trace 三层逻辑 + 11步蒸馏流程追溯",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "distill_id",
+    "kind",
+    "claim",
+    "supporting_case_ids",
+    "quadrant",
+    "migration_history"
+  ],
+  "properties": {
+    "distill_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "default": "v0.2"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "benefit_experience",
+        "risk_signal",
+        "decision_heuristic",
+        "contradiction_pattern",
+        "exit_logic",
+        "theory_update"
+      ]
+    },
+    "what_is_it": {
+      "type": "object",
+      "description": "是什么: 核心主张、定义、分类",
+      "additionalProperties": false,
+      "required": ["claim"],
+      "properties": {
+        "claim": { "type": "string", "description": "核心主张 (兼容顶层 claim)" },
+        "definition": { "type": ["string", "null"], "description": "定义" },
+        "classification": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "分类标签"
+        }
+      }
+    },
+    "why_it_works": {
+      "type": "object",
+      "description": "为什么: 因果分析、理论基础、证据链、解决的矛盾",
+      "additionalProperties": false,
+      "required": ["causal_analysis"],
+      "properties": {
+        "causal_analysis": { "type": "string", "description": "因果分析" },
+        "theory_basis": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_ref" },
+          "default": [],
+          "description": "理论基础 (引用知识库/理论)"
+        },
+        "evidence_chain": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evidence_link" },
+          "default": [],
+          "description": "证据链 (引用支持案例)"
+        },
+        "contradiction_resolved": { "type": ["string", "null"], "description": "解决的矛盾" }
+      }
+    },
+    "how_to_apply": {
+      "type": "object",
+      "description": "怎么做: 可操作规则、触发条件、逐步指南、风险警告",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "actionable_rules": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "可操作规则 (兼容顶层 actionable_rules)"
+        },
+        "trigger_conditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/trigger_condition" },
+          "default": [],
+          "description": "触发条件"
+        },
+        "step_by_step": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "逐步操作指南"
+        },
+        "risk_warnings": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "风险警告"
+        }
+      }
+    },
+    "supporting_case_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "claim": {
+      "type": "string",
+      "minLength": 1,
+      "description": "保留: 兼容 v0.1, 等同于 what_is_it.claim"
+    },
+    "actionable_rules": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "保留: 兼容 v0.1, 等同于 how_to_apply.actionable_rules"
+    },
+    "process_trace": {
+      "type": "object",
+      "description": "11步蒸馏流程追溯",
+      "additionalProperties": false,
+      "properties": {
+        "intent": {
+          "type": ["string", "null"],
+          "description": "意图: 明确问题"
+        },
+        "investigation": {
+          "type": ["string", "null"],
+          "description": "调研: 现状调查与矛盾分析"
+        },
+        "theory_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source_ref" },
+          "default": [],
+          "description": "理论: 知识库+历史事件+联网搜索"
+        },
+        "hypothesis": {
+          "type": ["string", "null"],
+          "description": "假设: 基于矛盾分析、现状、理论"
+        },
+        "test_results": {
+          "type": ["string", "null"],
+          "description": "测试与观测: 验证假设，搜集数据"
+        },
+        "conclusion": {
+          "type": ["string", "null"],
+          "description": "结论: 根据假设与实际表现推导"
+        },
+        "implementation": {
+          "type": ["string", "null"],
+          "description": "落地: 实施方案"
+        },
+        "monitoring": {
+          "type": ["string", "null"],
+          "description": "监控: 监控结果"
+        },
+        "review_result": {
+          "type": ["string", "null"],
+          "description": "复盘: 理论与实践一致性检验"
+        },
+        "reflection": {
+          "type": ["string", "null"],
+          "description": "做梦: 外部反思"
+        },
+        "optimization": {
+          "type": ["string", "null"],
+          "description": "更新优化: 最终优化方案"
+        }
+      }
+    },
+    "quadrant": { "$ref": "#/$defs/quadrant" },
+    "migration_history": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/migration_record" },
+      "default": []
+    }
+  },
+  "$defs": {
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "ref"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["repo_file", "url", "note"]
+        },
+        "ref": { "type": "string" }
+      }
+    },
+    "evidence_link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "relevance"],
+      "properties": {
+        "case_id": { "type": "string", "description": "关联的 TradeCase" },
+        "relevance": { "type": "string", "description": "关联说明" },
+        "weight": { "type": "number", "minimum": 0, "maximum": 1, "default": 1.0 }
+      }
+    },
+    "trigger_condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["condition"],
+      "properties": {
+        "condition": { "type": "string", "description": "条件描述" },
+        "regime": { "type": ["string", "null"], "description": "适用市场状态" },
+        "severity": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "严重程度阈值" }
+      }
+    },
+    "quadrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "evidence"],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["weights", "y_perf", "y_consistency", "y_human"],
+          "properties": {
+            "weights": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["perf", "consistency", "human"],
+              "properties": {
+                "perf": { "type": "number", "const": 0.4 },
+                "consistency": { "type": "number", "const": 0.4 },
+                "human": { "type": "number", "const": 0.2 }
+              }
+            },
+            "y_perf": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y_consistency": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y_human": { "type": "number", "minimum": 0, "maximum": 1 },
+            "notes": { "type": "string", "default": "" }
+          }
+        }
+      }
+    },
+    "migration_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ts", "y_prev", "y_new", "reason"],
+      "properties": {
+        "ts": { "type": "string", "minLength": 1 },
+        "y_prev": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y_new": { "type": "number", "minimum": 0, "maximum": 1 },
+        "reason": {
+          "type": "string",
+          "enum": ["new_case", "backtest_update", "review_update", "human_review_update"]
+        },
+        "note": { "type": "string", "default": "" }
+      }
+    }
+  }
+}

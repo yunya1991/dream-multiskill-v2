@@ -25,6 +25,11 @@ def memory_l4_stats_dir() -> Path:
     return memory_l4_dir() / "stats"
 
 
+def memory_l4_reviews_dir() -> Path:
+    """v0.2 新增: 复盘记录目录。"""
+    return memory_l4_dir() / "reviews"
+
+
 def episodes_dir() -> Path:
     return workbuddy_dir() / "episodes"
 
