@@ -30,6 +30,8 @@ P0 执行文档：
 - `constraints/workflows-spec/evolution-p0-rollback-pointer-spec-v0.1.md`
 - `constraints/workflows-spec/evolution-p1-stage-policy-spec-v0.1.md`
 - `constraints/workflows-spec/evolution-p1-5-policy-template-versioning-spec-v0.1.md`
+- `constraints/workflows-spec/evolution-p2-approval-gate-spec-v0.1.md`
+- `constraints/workflows-spec/evolution-p2-ops-automation-spec-v0.1.md`
 
 闭环主链：
 
@@ -84,6 +86,7 @@ P0 执行文档：
 - `constraint-promotion.yml`
 - `post-promotion-watch.yml`
 - `constraint-rollback.yml`
+- `evolution-default-smoke.yml`
 
 建议 artifacts 目录：
 
@@ -116,6 +119,7 @@ P0 执行文档：
 
 - 建立候选优先级评分；
 - 增加版本对比指标看板（先 JSON）；
+- 增加审批票据门禁（Decision + Approval 双门禁）；
 - 自动回滚执行器与 RTO 指标；
 - 周/月审计报表与治理 KPI。
 
@@ -127,3 +131,6 @@ P0 执行文档：
 - `2026-05-12`：P1 接入 `stress/scenario/backtest` 多门禁聚合判定，并引入 `stage_policy` 阶段级策略。
 - `2026-05-12`：完成 P1 聚合判定验收，沉淀 `stage_policy` 规范与正反样本审计产物。
 - `2026-05-12`：进入 P1.5，新增 `policy_version` 模板库机制与回归矩阵执行器。
+- `2026-05-12`：进入 P2 审批流绑定，新增 approval ticket fail-closed 门禁与审计产物规范。
+- `2026-05-12`：补全 P2 运营自动化（评分、版本看板、自动回滚执行器、周/月治理报表）并接入 workflow。
+- `2026-05-12`：完成 P2 缺口收口：周/月报调度路由修复、release snapshot 基线、推荐 workflow 拆分落地、默认绿路 smoke 校验。

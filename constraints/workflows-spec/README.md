@@ -21,6 +21,9 @@
 - `evolution-p1-acceptance-report-2026-05-12.md`：P1 多门禁聚合验收报告（stress/scenario/backtest + stage_policy）
 - `evolution-p1-5-policy-template-versioning-spec-v0.1.md`：P1.5 `policy_version` 模板库与版本化规范
 - `evolution-p1-5-regression-matrix-report-2026-05-12.md`：P1.5 回归矩阵执行报告
+- `evolution-p2-approval-gate-spec-v0.1.md`：P2 审批票据门禁规范（Decision + Approval 双门禁）
+- `evolution-p2-ops-automation-spec-v0.1.md`：P2 运营自动化规范（评分/看板/自动回滚/周期报表）
+- `evolution.md`（2026-05-12 追加）：补齐推荐 workflow 拆分与默认 smoke 验收路径
 - `communication-contract-v0.1.md`：三层通信调用与闭环升级契约
 - `trading-communication-protocol-v2.md`：A0-A9 通信协议与定时驱动架构（v2.1，2026-05-12 更新：A0 集成化 + 治理环重构 + 定时调度）
 - `memory.md`（2026-05-10 更新）：新增 L1~L4 显式入口映射与 `MemoryEngine` 调用对齐约定
