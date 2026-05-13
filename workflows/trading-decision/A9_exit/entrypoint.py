@@ -23,6 +23,16 @@ def _exit_action(unrealized_pnl_pct: float, risk_level: str) -> str:
     return 'HOLD'
 
 
+def _retrieve_memory(payload: Dict[str, Any]) -> list:
+    try:
+        from workflows.trading_decision.orchestrator.memory_retriever import (
+            retrieve_memory_refs_for_stage,
+        )
+        return retrieve_memory_refs_for_stage("A9", payload, topk=3)
+    except Exception:
+        return []
+
+
 def run_a9_exit(payload: Dict[str, Any], output_dir: Optional[Path] = None) -> Dict[str, Any]:
     """Thin wrapper for A9 exit plan output."""
     proto = _load_protocol_module()
@@ -35,6 +45,8 @@ def run_a9_exit(payload: Dict[str, Any], output_dir: Optional[Path] = None) -> D
     base.mkdir(parents=True, exist_ok=True)
     out_path = base / f'a9_exit_{ts}.json'
 
+    memory_refs = _retrieve_memory(payload)
+
     result = proto.ensure_contract_fields(
         {
         'stage_id': 'A9',
@@ -46,6 +58,7 @@ def run_a9_exit(payload: Dict[str, Any], output_dir: Optional[Path] = None) -> D
         },
         producer="workflows/trading-decision/A9_exit",
     )
+    result['memory_refs'] = memory_refs
     result['artifact_path'] = str(out_path)
     proto.require_contract_fields(result)
     out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')

@@ -29,6 +29,7 @@ from scripts.memory_l4 import a0a9_bridge
 from scripts.memory_l4 import review_engine
 from scripts.memory_l4 import distill_engine
 from scripts.memory_l4 import stats_engine
+from scripts.memory_l4 import index_builder
 
 
 def now_iso_local() -> str:
@@ -160,6 +161,28 @@ def step_stats(case_data: Dict[str, Any]) -> Dict[str, Any]:
     return stats
 
 
+def step_rebuild_index() -> Dict[str, Any]:
+    """Step 5.5: 重建 L4 索引 (M3.5_INDEX_REBUILT)。
+
+    在所有 case 和 distill 数据更新后重建检索索引，
+    确保 A 系列交易阶段能检索到最新记忆。
+    """
+    cases = index_builder.load_cases()
+    distills = index_builder.load_distills()
+    episodes = index_builder.load_episodes_for_cases(cases)
+
+    data = index_builder.build_index_data(
+        snapshot_ts=now_iso_local(),
+        cases=cases,
+        distills=distills,
+        episodes_by_path=episodes,
+    )
+    out_path = index_builder.write_index(data, index_builder.default_index_path())
+
+    print(f"[M3.5] Index rebuilt: {len(data['case_features'])} cases at {out_path}")
+    return {"index_path": str(out_path), "case_count": len(data["case_features"])}
+
+
 def step_emit_candidate(case_data: Dict[str, Any], review: Dict[str, Any], distill: Dict[str, Any]) -> Dict[str, Any]:
     """Step 6: 生成进化候选记录 (M4_CANDIDATE_EMITTED)。"""
     cid = case_data["case_id"]
@@ -210,7 +233,7 @@ def run_pipeline(
     Returns:
         包含各步骤产出的字典
     """
-    all_steps = ["register", "a0a9", "review", "distill", "stats", "emit"]
+    all_steps = ["register", "a0a9", "review", "distill", "stats", "rebuild_index", "emit"]
     active_steps = steps or all_steps
 
     result: Dict[str, Any] = {"episode": str(episode_path), "steps_executed": []}
@@ -239,6 +262,11 @@ def run_pipeline(
         stats = step_stats(case_data)
         result["stats"] = stats
         result["steps_executed"].append("stats")
+
+    if "rebuild_index" in active_steps:
+        index_result = step_rebuild_index()
+        result["index"] = index_result
+        result["steps_executed"].append("rebuild_index")
 
     if "emit" in active_steps:
         candidate = step_emit_candidate(case_data, review, distill)
@@ -286,7 +314,7 @@ def main() -> None:
         "--steps",
         nargs="*",
         default=None,
-        help="Steps to run (default: all). Choices: register a0a9 review distill stats emit",
+        help="Steps to run (default: all). Choices: register a0a9 review distill stats rebuild_index emit",
     )
     parser.add_argument("--out", help="Output result JSON file")
     args = parser.parse_args()
