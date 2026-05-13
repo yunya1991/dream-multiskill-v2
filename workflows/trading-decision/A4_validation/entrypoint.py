@@ -22,6 +22,16 @@ def _risk_gate(max_drawdown_pct: float, position_ratio: float, stop_loss_pct: fl
     return 'PASS'
 
 
+def _retrieve_memory(payload: Dict[str, Any]) -> list:
+    try:
+        from workflows.trading_decision.orchestrator.memory_retriever import (
+            retrieve_memory_refs_for_stage,
+        )
+        return retrieve_memory_refs_for_stage("A4", payload, topk=3)
+    except Exception:
+        return []
+
+
 def run_a4_validation(payload: Dict[str, Any], output_dir: Optional[Path] = None) -> Dict[str, Any]:
     """Thin wrapper for A4 risk gate validation artifact output."""
     proto = _load_protocol_module()
@@ -35,6 +45,8 @@ def run_a4_validation(payload: Dict[str, Any], output_dir: Optional[Path] = None
     base.mkdir(parents=True, exist_ok=True)
     out_path = base / f'a4_validation_{ts}.json'
 
+    memory_refs = _retrieve_memory(payload)
+
     result = proto.ensure_contract_fields(
         {
         'stage_id': 'A4',
@@ -47,6 +59,7 @@ def run_a4_validation(payload: Dict[str, Any], output_dir: Optional[Path] = None
         },
         producer="workflows/trading-decision/A4_validation",
     )
+    result['memory_refs'] = memory_refs
     result['artifact_path'] = str(out_path)
     proto.require_contract_fields(result)
     out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')

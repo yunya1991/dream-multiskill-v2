@@ -14,6 +14,16 @@ def _load_protocol_module():
     return module
 
 
+def _retrieve_memory(payload: Dict[str, Any]) -> list:
+    try:
+        from workflows.trading_decision.orchestrator.memory_retriever import (
+            retrieve_memory_refs_for_stage,
+        )
+        return retrieve_memory_refs_for_stage("A1", payload, topk=3)
+    except Exception:
+        return []
+
+
 def run_a1_research(payload: Dict[str, Any], output_dir: Optional[Path] = None) -> Dict[str, Any]:
     """Thin wrapper for A1 research artifact output."""
     proto = _load_protocol_module()
@@ -21,6 +31,8 @@ def run_a1_research(payload: Dict[str, Any], output_dir: Optional[Path] = None) 
     base = Path(output_dir) if output_dir is not None else Path("artifacts/trading")
     base.mkdir(parents=True, exist_ok=True)
     out_path = base / f"a1_research_{ts}.json"
+
+    memory_refs = _retrieve_memory(payload)
 
     result = proto.ensure_contract_fields(
         {
@@ -32,6 +44,7 @@ def run_a1_research(payload: Dict[str, Any], output_dir: Optional[Path] = None) 
         },
         producer="workflows/trading-decision/A1_research",
     )
+    result["memory_refs"] = memory_refs
     result["artifact_path"] = str(out_path)
     proto.require_contract_fields(result)
     out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
