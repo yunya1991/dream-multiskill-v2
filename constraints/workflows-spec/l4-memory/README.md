@@ -6,6 +6,7 @@
 
 - `architecture-and-workflow-design.md`：L4 记忆工程架构规范（约束层基线）。
 - `acceptance-checklist.md`：L4 两级门禁验收清单（`skeleton-ready` / `production-ready`）。
+- `L4_memory_quantization_design_20260513.md`：L4 记忆量化模型升级综合方案（主文档，吸收 QMM Phase 1 关键约束/门禁/对标落点）。
 
 ## 主从映射
 
