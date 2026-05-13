@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
+import pytest
+
 _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -29,11 +31,6 @@ from scripts.memory_l4.paths import (
 from scripts.memory_l4 import case_registry, a0a9_bridge, review_engine
 from scripts.memory_l4 import distill_engine, stats_engine, pipeline
 from scripts.memory_l4 import index_builder, query_similar
-
-PASSED = 0
-FAILED = 0
-TESTS = []
-
 
 def _ts() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -118,19 +115,25 @@ def _make_a0a9_artifacts_for(cid: str, stages: list = None):
             f.write_text(json.dumps(templates[stage], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def test(name: str, func):
-    global PASSED, FAILED
-    try:
-        func()
-        PASSED += 1
-        TESTS.append((name, "PASS", ""))
-        print(f"  [PASS] {name}")
-    except Exception as e:
-        FAILED += 1
-        tb = traceback.format_exc()
-        TESTS.append((name, "FAIL", str(e)))
-        print(f"  [FAIL] {name}: {e}")
-        # print(tb)  # uncomment for debugging
+def _purge_dir(d: Path, patterns: tuple[str, ...]) -> None:
+    if not d.exists():
+        return
+    for pat in patterns:
+        for p in d.glob(pat):
+            if p.is_file() and p.name != ".gitkeep":
+                p.unlink()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _clean_workspace():
+    _purge_dir(workbuddy_dir() / "episodes", ("*.json",))
+    _purge_dir(memory_l4_cases_dir(), ("*.json",))
+    _purge_dir(memory_l4_reviews_dir(), ("*.json",))
+    _purge_dir(memory_l4_distills_dir(), ("*.json",))
+    _purge_dir(memory_l4_stats_dir(), ("*.json",))
+    trading_dir = workspace_root() / "artifacts" / "trading"
+    _purge_dir(trading_dir, ("*_output.json",))
+    yield
 
 
 # ===================================================================
