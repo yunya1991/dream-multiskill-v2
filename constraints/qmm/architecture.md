@@ -619,16 +619,25 @@ def _load_qmm_signals(regime: str) -> Optional[Dict]:
 
 ---
 
-## 七、阶段路线图
+## 七、阶段路线图（双轨战略）
 
-| 阶段 | 仓库 | 能力 | 依赖 | 状态 |
-|------|------|------|------|------|
-| Phase 1 | V2 (dream-multiskill-v2) | 离线内核：数据准备+三屏+MRD+速度+变化点+不确定性 | math/statistics | 设计中 |
-| Phase 2 | V2 (dream-multiskill-v2) | 在线门禁：回测+过拟合检测+漂移监控+A 系列消费 | math/statistics | 设计中 |
-| Phase 3 | V3 (独立仓库) | ML 训练闭环：sklearn 训练器+DSR+t-test | numpy/sklearn/scipy | 规划中 |
-| Phase 4 | V4 (独立仓库) | QMM V2 内核：表征学习+动态权重+知识图谱 | 完整 ML 栈 | 远景 |
+### Phase A（并行验证期）
 
-**V2 仓库在完成 Phase 1+2 后停止进化**，Phase 3/4 在 V3/V4 独立仓库并行研究。
+| 轨道 | 任务 | 目标 | 依赖 |
+|------|------|------|------|
+| 保守线 (V2 基线) | 实现 phase-1 最小集 | 零依赖确定性基线，输出固定契约 JSON | math/statistics |
+| 激进线 (V5 原型) | 快速端到端链路验证 | walk-forward 回测，验证 ML 胜率 >55% | numpy/sklearn |
+
+### Phase B（收敛判断）
+
+Phase A 完成后，按 `execution-plan.md` 的收敛标准决定方向：
+
+| V5 原型结果 | 后续方向 |
+|-------------|----------|
+| 胜率 >55% 且稳定 | 放弃 V3→V4，直接在 V2 引入 V5 核心 ML 组件 |
+| 胜率 ≤55% 或过拟合 | 走 V2→V3→V4 保守路线 |
+
+> 详细收敛判断标准见 `execution-plan.md` 第五节。
 
 ---
 
@@ -649,4 +658,5 @@ def _load_qmm_signals(regime: str) -> Optional[Dict]:
 | 版本 | 日期 | 变更 |
 |------|------|------|
 | v1 (PR #48) | 2026-05-13 | 初始草案，含约束与矛盾实现 |
-| v2 (本文) | 2026-05-13 | 修正所有矛盾：去掉 numpy/sklearn、定义单入口、统一英文 reason_codes、明确 L4/QMM 定位、修正硬编码权重为等权基线 |
+| v2 (PR #50) | 2026-05-13 | 修正所有矛盾：去掉 numpy/sklearn、定义单入口、统一英文 reason_codes、明确 L4/QMM 定位、修正硬编码权重为等权基线 |
+| v3 (本文) | 2026-05-13 | 双轨战略：Phase A 并行验证（V2 基线 + V5 原型），Phase B 按回测收敛选择方向 |

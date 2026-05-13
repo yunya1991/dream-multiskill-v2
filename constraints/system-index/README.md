@@ -4,3 +4,4 @@
 
 - 基线架构文档：`engineering-architecture.md`
 - QMM 量化内核约束（可插拔，固定输出契约）：`constraints/qmm/`
+- QMM 双轨策略执行计划（研究域与工程域隔离）：`constraints/qmm/execution-plan.md`
