@@ -1,0 +1,27 @@
+version: 1
+
+allowed_base_branches:
+  - main
+
+forbidden_globs:
+  - ".workbuddy/**"
+  - "artifacts/**"
+  - "**/*.log"
+  - "**/*.tmp"
+  - "**/.env"
+  - "**/.env.*"
+
+max_scope_patterns: 24
+max_changed_files: 80
+max_file_bytes: 1048576
+
+overlap_detection:
+  enabled: true
+  mode: "pattern_prefix"
+
+override_labels:
+  - "ai-collab/override-scope"
+  - "ai-collab/allow-generated"
+  - "ai-collab/allow-large-files"
+  - "ai-collab/dependency-chain"
+
