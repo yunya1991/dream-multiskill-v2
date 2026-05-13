@@ -1,12 +1,12 @@
-"""QMM 单入口：run_qmm()。"""
+"""QMM 单入口：run_qmm() + run_qmm_with_gate()。"""
 
 import json
-from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .data_prep import prepare_events
+from .gate import GateResult, GateRunner
 from .mrd import compute_mrd
 from .paths import qmm_dir
 from .triple_screen import ScreenConfig, compute_triple_screen
@@ -20,7 +20,7 @@ def run_qmm(
     distills: List[Dict[str, Any]],
     config: Optional[Dict[str, Any]] = None,
 ) -> QMMOutput:
-    """QMM 唯一入口。
+    """QMM 离线内核入口。
 
     执行流程:
     1. 数据准备
@@ -56,7 +56,7 @@ def run_qmm(
             feature_def_version=feature_def_version,
             qmm_version=qmm_version,
         )
-        _save_output(output, qmm_dir())
+        _save_output(output, qmm_dir(), gate_status="OFFLINE")
         return output
 
     # Step 2: 三屏对齐
@@ -102,9 +102,54 @@ def run_qmm(
     )
 
     # Step 7: 写入输出
-    _save_output(output, qmm_dir())
+    _save_output(output, qmm_dir(), gate_status="OFFLINE")
 
     return output
+
+
+def run_qmm_with_gate(
+    cases: List[Dict[str, Any]],
+    distills: List[Dict[str, Any]],
+    config: Optional[Dict[str, Any]] = None,
+    gate_config: Optional[Dict[str, Any]] = None,
+) -> tuple:
+    """QMM 内核 + 门禁联合入口。
+
+    返回: (QMMOutput, GateResult)
+    门禁不通过时，gate_status 标记为 FAILED。
+    """
+    # 先运行 QMM 内核
+    output = run_qmm(cases, distills, config)
+
+    # 从 cases 重新获取 events 用于回测
+    events = prepare_events(cases, distills)
+
+    # 门禁需要足够数据
+    if len(events) < 15:
+        gate_result = GateResult(
+            backtest=None,  # type: ignore[arg-type]
+            overfitting=None,  # type: ignore[arg-type]
+            drift=None,  # type: ignore[arg-type]
+            passed=False,
+            reason_codes=["INSUFFICIENT_DATA_FOR_GATE"],
+        )
+        _update_gate_status(qmm_dir(), gate_result)
+        return output, gate_result
+
+    # 执行门禁
+    gc = gate_config or {}
+    runner = GateRunner(
+        n_folds=gc.get("n_folds", 5),
+        min_train=gc.get("min_train", 10),
+        min_test=gc.get("min_test", 5),
+    )
+    gate_result = runner.run(events)
+    runner.save_gate_result(gate_result)
+
+    # 更新 QMM 快照中的 gate_status
+    _update_gate_status(qmm_dir(), gate_result)
+
+    return output, gate_result
 
 
 def _screen_to_dict(sr) -> Dict[str, Any]:
@@ -151,7 +196,9 @@ def _build_reason_codes(
     return codes
 
 
-def _save_output(output: QMMOutput, out_dir: Path) -> None:
+def _save_output(
+    output: QMMOutput, out_dir: Path, gate_status: str = "OFFLINE",
+) -> None:
     """写入 QMM 快照和信号索引。"""
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -159,6 +206,7 @@ def _save_output(output: QMMOutput, out_dir: Path) -> None:
     snapshot_path = out_dir / f"qmm_snapshot_{ts}.json"
 
     data = _to_dict(output)
+    data["gate_status"] = gate_status
     snapshot_path.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
@@ -177,11 +225,27 @@ def _save_output(output: QMMOutput, out_dir: Path) -> None:
         "uncertainty": output.uncertainty,
         "reason_codes": output.reason_codes,
         "evidence_refs": output.evidence_refs,
-        "gate_status": "OFFLINE",
+        "gate_status": gate_status,
         "output_file": str(snapshot_path),
     }
     index_path.write_text(
         json.dumps(index_data, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _update_gate_status(out_dir: Path, gate_result: "GateResult") -> None:
+    """更新 signals_index.json 中的 gate_status。"""
+    index_path = out_dir / "signals_index.json"
+    if not index_path.exists():
+        return
+
+    data = json.loads(index_path.read_text(encoding="utf-8"))
+    data["gate_status"] = "PASSED" if gate_result.passed else "FAILED"
+    data["gate_results"] = gate_result.to_dict()
+
+    index_path.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
 
