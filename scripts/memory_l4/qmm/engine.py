@@ -241,13 +241,27 @@ def _update_gate_status(out_dir: Path, gate_result: "GateResult") -> None:
         return
 
     data = json.loads(index_path.read_text(encoding="utf-8"))
-    data["gate_status"] = "PASSED" if gate_result.passed else "FAILED"
-    data["gate_results"] = gate_result.to_dict()
+    gate_status = "PASSED" if gate_result.passed else "FAILED"
+    gate_results = gate_result.to_dict()
+    data["gate_status"] = gate_status
+    data["gate_results"] = gate_results
 
     index_path.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+
+    output_file = data.get("output_file")
+    if isinstance(output_file, str) and output_file:
+        snapshot_path = Path(output_file)
+        if snapshot_path.exists():
+            snapshot_data = json.loads(snapshot_path.read_text(encoding="utf-8"))
+            snapshot_data["gate_status"] = gate_status
+            snapshot_data["gate_results"] = gate_results
+            snapshot_path.write_text(
+                json.dumps(snapshot_data, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
 
 
 def _to_dict(obj: Any) -> Dict[str, Any]:

@@ -13,39 +13,51 @@ from .types import CleanedEvent
 
 @dataclass
 class GateResult:
-    backtest: BacktestResult
-    overfitting: OverfitReport
-    drift: DriftReport
+    backtest: Optional[BacktestResult]
+    overfitting: Optional[OverfitReport]
+    drift: Optional[DriftReport]
     passed: bool
     reason_codes: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
-            "passed": self.passed,
-            "reason_codes": self.reason_codes,
-            "backtest": {
+        backtest = None
+        if self.backtest is not None:
+            backtest = {
                 "total_predictions": self.backtest.total_predictions,
                 "overall_accuracy": self.backtest.overall_accuracy,
                 "high_confidence_accuracy": self.backtest.high_confidence_accuracy,
                 "fold_accuracies": self.backtest.fold_accuracies,
                 "train_test_gap": self.backtest.train_test_gap,
                 "by_regime": self.backtest.by_regime,
-            },
-            "overfitting": {
+            }
+
+        overfitting = None
+        if self.overfitting is not None:
+            overfitting = {
                 "is_overfit": self.overfitting.is_overfit,
                 "train_test_gap": self.overfitting.train_test_gap,
                 "fold_variance": self.overfitting.fold_variance,
                 "regime_max_gap": self.overfitting.regime_max_gap,
                 "recommendation": self.overfitting.recommendation,
-            },
-            "drift": {
+            }
+
+        drift = None
+        if self.drift is not None:
+            drift = {
                 "drift_detected": self.drift.drift_detected,
                 "drift_type": self.drift.drift_type,
                 "severity": self.drift.severity,
                 "psi_x": self.drift.psi_x,
                 "performance_drift": self.drift.performance_drift,
                 "recommendation": self.drift.recommendation,
-            },
+            }
+
+        return {
+            "passed": self.passed,
+            "reason_codes": self.reason_codes,
+            "backtest": backtest,
+            "overfitting": overfitting,
+            "drift": drift,
         }
 
 

@@ -122,20 +122,34 @@ def _compute_quality(ev: CleanedEvent) -> float:
 def _compute_data_version(cases: List[Dict[str, Any]]) -> str:
     """生成 data_version: dv-{YYYYMMDD}-{N}。"""
     from datetime import datetime, timezone
+    import json
 
     now = datetime.now(timezone.utc)
     date_str = now.strftime("%Y%m%d")
 
-    # 用 case 数量和最近修改时间做 hash
-    n = len(cases)
-    latest_ts = ""
-    for c in cases:
-        ts = c.get("ts_start", "")
-        if ts > latest_ts:
-            latest_ts = ts
+    from .paths import qmm_dir
 
-    # 简单 hash
-    import hashlib
-    raw = f"{n}:{latest_ts}"
-    h = hashlib.md5(raw.encode()).hexdigest()[:3]
-    return f"dv-{date_str}-{h}"
+    out_dir = qmm_dir()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    state_path = out_dir / "data_version_state.json"
+
+    state = {}
+    if state_path.exists():
+        try:
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            state = {}
+
+    prev_date = state.get("date")
+    prev_seq = state.get("seq")
+    if prev_date == date_str and isinstance(prev_seq, int) and prev_seq > 0:
+        seq = prev_seq + 1
+    else:
+        seq = 1
+
+    data_version = f"dv-{date_str}-{seq:03d}"
+    state_path.write_text(
+        json.dumps({"date": date_str, "seq": seq, "data_version": data_version}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return data_version
