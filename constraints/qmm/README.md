@@ -30,6 +30,9 @@ V2 完成 Phase 1+2 后停止进化，Phase 3/4 在 V3/V4 并行研究。
 ### 基础规范
 - `version-triple-spec.md`：版本三元组规范（data_version / feature_def_version / qmm_version）
 
+### 远景
+- `qmm-v5-vision.md`：QMM V5 终极愿景（原 PR #48，不受约束的完整设计空间探索）
+
 ## 主从映射
 
 - 顶层总架构（主）：`constraints/qmm/architecture.md`
