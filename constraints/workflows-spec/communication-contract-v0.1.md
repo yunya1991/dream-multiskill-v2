@@ -162,3 +162,4 @@ evolution --审核发布--> constraints
 - `2026-05-11T12:00:00Z`：完成 A0-A9 架构与 `trading-communication-protocol-v2.md` 规范对齐：执行环新增 A6 情报环节（A5→A6→A9）、A9→A7 治理触发消息；治理环新增 A0 矛盾监控入口（A0→A9→A7→A8→A2/A3）；状态机状态名称对齐规范；新增 30 个集成测试覆盖完整链路、重试逻辑、告警边界、协议合约校验。
 - `2026-05-12T00:00:00Z`：完成 `trading-communication-protocol-v2.md` v2.1 重构：A0 矛盾 Skill 集成化（嵌入 A1/A2/A3，不再独立运行）；治理环重构为 A7→A8→A1/A2/A3（A8 gap_score 分级路由：<0.5→A1，0.5-0.7→A2，>0.7→A3）；状态机移除 SIGNAL/MONITORING/ALERT，IDLE 直连 RESEARCH；新增定时调度系统（A4 4h, A5 8h, A6 1h, A8 每日14:00）。
 - `2026-05-12T12:50:00Z`：P1 传输层升级：交易链路支持真实 HTTP 对接与 Redis Streams 异步投递（endpoint/topic 与 `trading-communication-protocol-v2.md` 对齐），并将传输能力纳入 CI 门禁。
+- `2026-05-13T00:00:00Z`：同步记忆 L4 架构升级：新增 `scripts/memory_l4/pipeline.py`，并将 L4 检索能力接入 A 系列阶段入口与 `workflows/trading-decision/orchestrator/memory_retriever.py`。
