@@ -16,8 +16,8 @@ from sklearn.preprocessing import StandardScaler
 class MemoryTrainer:
     """基于历史 TradeCase 训练方向预测模型。
 
-    特征: quadrant_x, quadrant_y, pnl_pct, y_perf, y_consistency, y_human,
-           stage coverage, time_decay, regime, drawdown
+    特征: quadrant_x, quadrant_y, y_perf, y_consistency, y_human,
+           stage coverage, time_decay, regime, drawdown (12 维)
     标签: direction (1=UP, 0=DOWN)
     模型: GradientBoostingClassifier
     """
@@ -59,11 +59,11 @@ class MemoryTrainer:
             X_scaled = X
 
         self.feature_names = [
-            "quadrant_x", "quadrant_y", "pnl_pct",
+            "quadrant_x", "quadrant_y",
             "y_perf", "y_consistency", "y_human",
             "stage_a0", "stage_a5", "stage_a9",
-            "stage_coverage_pct", "time_decay", "regime",
-            "direction", "drawdown",
+            "stages_count_norm", "time_decay",
+            "regime", "drawdown",
         ]
 
         return X_scaled, y
@@ -74,7 +74,7 @@ class MemoryTrainer:
         """训练模型并返回训练指标。
 
         Args:
-            X: 标准化特征矩阵 (N x 14)
+            X: 标准化特征矩阵 (N x 12)
             y: 标签 (N,)
 
         Returns:

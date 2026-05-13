@@ -26,16 +26,29 @@ class QMMEvent:
     time_decay: float = 1.0
 
     def to_feature_vector(self) -> List[float]:
-        """编码为数值特征向量。"""
+        """编码为数值特征向量。
+
+        12 维特征（不含 pnl_pct / direction，避免数据泄露）：
+        0: quadrant_x
+        1: quadrant_y
+        2: y_perf
+        3: y_consistency
+        4: y_human
+        5: stage_coverage A0
+        6: stage_coverage A5
+        7: stage_coverage A9
+        8: stages_count / 10
+        9: time_decay
+        10: regime encoded
+        11: drawdown
+        """
         regime_map = {
             "bull": 1.0, "bear": -1.0, "oscillation": 0.0,
             "crash": -2.0, "recovery": 0.5, "consolidation": 0.2,
         }
-        direction = 1.0 if self.is_profit else (-1.0 if self.pnl_pct is not None and self.pnl_pct < 0 else 0.0)
         return [
             self.quadrant_x,
             self.quadrant_y,
-            self.pnl_pct or 0.0,
             self.y_perf,
             self.y_consistency,
             self.y_human,
@@ -45,7 +58,6 @@ class QMMEvent:
             self.stages_count / 10.0,
             self.time_decay,
             regime_map.get(self.regime, 0.0),
-            direction,
             self.drawdown if self.drawdown is not None else 0.0,
         ]
 

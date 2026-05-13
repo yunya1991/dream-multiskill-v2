@@ -32,7 +32,7 @@ class SignalGenerator:
         """生成趋势信号。
 
         Args:
-            feature_matrix: (N x 14) numpy 矩阵
+            feature_matrix: (N x 12) numpy 矩阵
             events: 对应的 QMMEvent 列表
 
         Returns:

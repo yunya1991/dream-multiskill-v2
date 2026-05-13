@@ -35,7 +35,7 @@ class V5Backtester:
         """执行 walk-forward 回测。
 
         Args:
-            feature_matrix: (N x 14) 特征矩阵
+            feature_matrix: (N x 12) 特征矩阵
             events: QMMEvent 列表（与 feature_matrix 对应）
 
         Returns:

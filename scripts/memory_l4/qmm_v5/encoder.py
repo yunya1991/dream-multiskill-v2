@@ -17,24 +17,22 @@ from .types import QMMEvent
 class EventEncoder:
     """将记忆事件编码为数值向量。
 
-    特征维度 = 实际特征数（非固定 128 维）：
+    特征维度 = 12 维（不含 pnl_pct / direction，避免数据泄露）：
     1. quadrant_x (-1 ~ 1)
     2. quadrant_y (0 ~ 1)
-    3. pnl_pct
-    4. y_perf (0 ~ 1)
-    5. y_consistency (0 ~ 1)
-    6. y_human (0 ~ 1)
-    7. stage_coverage A0
-    8. stage_coverage A5
-    9. stage_coverage A9
-    10. stages_count / 10
-    11. time_decay (0 ~ 1)
-    12. regime encoded
-    13. direction (+1/-1/0)
-    14. drawdown
+    3. y_perf (0 ~ 1)
+    4. y_consistency (0 ~ 1)
+    5. y_human (0 ~ 1)
+    6. stage_coverage A0
+    7. stage_coverage A5
+    8. stage_coverage A9
+    9. stages_count / 10
+    10. time_decay (0 ~ 1)
+    11. regime encoded
+    12. drawdown
     """
 
-    FEATURE_DIM = 14
+    FEATURE_DIM = 12
     HALF_LIFE_DAYS = 69  # e^{-0.01 * days} ≈ 69 天半衰期
 
     def __init__(self, random_state: int = 42):
