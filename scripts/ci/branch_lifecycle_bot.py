@@ -76,6 +76,11 @@ def classify_branch(*, branch: Dict[str, Any], retention_days: int) -> Dict[str,
     if branch.get("protected") or name == "main":
         return {"risk_level": "L3", "labels": [LABEL_MANUAL_REVIEW], "actions": []}
 
+    # 永久保留：研究分支（长期保留作为参考）
+    research_prefixes = ("feature/qmm-v5-prototype", "research/")
+    if any(name.startswith(p) for p in research_prefixes):
+        return {"risk_level": "L3", "labels": ["branch-bot/research-branch"], "actions": []}
+
     if branch.get("is_merged") and int(branch.get("age_days", 0)) >= retention_days:
         return {
             "risk_level": "L1",
